@@ -7,7 +7,7 @@ import { HttpClient } from "@angular/common/http";
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent { 
   title = 'angularcli';
   
   constructor(private client: HttpClient) {}
@@ -18,14 +18,15 @@ export class AppComponent {
 	  let url = "/web/login";
     let headers = {
       // "Access-Control-Allow-Headers": "*"
-      "Access-Control-Allow-Credentials": "true",
-      "x-requested-with": "XMLHttpRequest",
+      // "Access-Control-Allow-Credentials": "true",
+      // "x-requested-with": "XMLHttpRequest",
       // Cookie: "session_id=hfehfkerhkhgrihgirhegkhrkgh"
     };
 
     this.client.get(url, { responseType: "text", headers }).subscribe((html) => {
-      console.log(html);
+      //console.log(html);
       let doc = Jsoup.parse(html);
+      console.log(doc.select('form').eq(1));
     });
   }
   
