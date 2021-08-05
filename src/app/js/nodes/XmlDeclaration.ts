@@ -2,9 +2,14 @@ import { Assert } from "../helper/Assert";
 import { StringBuilder } from "../helper/StringBuilder";
 import { OutputSetting } from "../parse/Setting";
 import { Entities } from "./Entities";
-import { LeafNode } from "./LeafNode";
+import { LeafNode } from "./1006_LeafNode";
+import { Node } from "./1004_Node";
 
 export class XmlDeclaration extends LeafNode {
+  static is(node: Node): node is XmlDeclaration {
+    return node instanceof XmlDeclaration;
+  }
+
   /**
    * Create a new XML declaration
    * @param name of declaration

@@ -1,6 +1,6 @@
 import { StringBuilder } from '../helper/StringBuilder';
 import { OutputSetting } from '../parse/Setting';
-import { LeafNode } from './LeafNode';
+import { LeafNode } from './1006_LeafNode';
 
 /**
  * A data node, for contents of style, script tags etc,

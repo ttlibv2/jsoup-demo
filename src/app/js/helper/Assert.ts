@@ -1,14 +1,10 @@
-import { Node } from '../nodes/Node';
+// import { Node } from '../nodes/1004_Node';
 import { Objects } from './Objects';
 
 export class Assert {
 	
 	static fail(msg: string) {
 		throw new Error(msg);
-	}
-
-	static noNullElements(children: Node[]) {
-		throw new Error('Method not implemented.');
 	}
 
 	static isTrue(bool: boolean, msg?: string) {

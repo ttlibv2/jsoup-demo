@@ -1,14 +1,18 @@
-import { NodeUtils } from "../helper/NodeUtils";
 import { StringBuilder } from "../helper/StringBuilder";
 import { Parser } from "../parse/Parser";
 import { OutputSetting, ParseSetting } from "../parse/Setting";
-import { LeafNode } from "./LeafNode";
+import { Node } from "./1004_Node";
+import { LeafNode } from "./1006_LeafNode";
+import { Element } from "./Element";
 import { XmlDeclaration } from "./XmlDeclaration";
 
 /**
  * A comment node.
  */
 export class Comment extends LeafNode {
+  static is(node: Node): node is Comment {
+    return node instanceof Comment;
+  }
   constructor(data: string) {
     super();
     this.value = data;
@@ -40,16 +44,12 @@ export class Comment extends LeafNode {
     return Comment.isXmlDeclarationData(data);
   }
 
-  outerHtmlHead(
-    accum: StringBuilder,
-    depth: number,
-    setting: OutputSetting
-  ): void {
+  outerHtmlHead( accum: StringBuilder, depth: number, setting: OutputSetting ): void {
     let pretty = setting.prettyPrint;
     let parent = this.parent();
     let isIf0 = () =>
       this.getSiblingIndex() === 0 &&
-      NodeUtils.isElement(parent) &&
+      Element.is(parent) &&
       parent.tag().formatAsBlock;
 
     if (pretty && isIf0() && setting.outline) {

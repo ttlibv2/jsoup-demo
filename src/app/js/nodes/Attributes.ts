@@ -40,10 +40,8 @@ export class Attributes extends ArrayList<Attribute> {
 
   /** @private */
   get(object: string | number, ignoreCase?: boolean): Attribute {
-    let index = Objects.isNumber(object)
-      ? object
-      : this.indexOf(object, ignoreCase);
-    return super.get(index);
+    let index = Objects.isNumber(object)  ? object : this.indexOf(object, ignoreCase);
+    return super.get(index) || null;
   }
 
   /**
@@ -64,10 +62,10 @@ export class Attributes extends ArrayList<Attribute> {
     if (first instanceof Attribute) return super.indexOf(first);
     else if (Objects.isString(first)) {
       let name: string = first;
-      let applyEqual = (n1: string, n2: string) =>
-        !!ignoreCase ? n1.toLowerCase() === n2.toLowerCase() : n1 === n2;
+      let applyEqual = (n1: string, n2: string) => !!ignoreCase ? n1.toLowerCase() === n2.toLowerCase() : n1 === n2;
       return this.findIndex((attr) => applyEqual(attr.getName(), name));
     }
+	else throw Error(`@arguments [indexOf(first: string | Attribute, ignoreCase?: boolean)] `);
   }
 
   /**
@@ -195,17 +193,15 @@ export class Attributes extends ArrayList<Attribute> {
 
     // [string, string]
     else if (Objects.isString(first) && Objects.isString(last)) {
-      let name: string = first,
-        value = last;
+      let name: string = first, value = last;
       let attr = this.get(name);
-      if (attr !== null) attr.setValue(value);
+      if (Objects.notNull(attr)) attr.setValue(value);
       else this.add(name, value);
     }
 
     // [string, boolean]
     else if (Objects.isString(first) && Objects.isBoolean(last)) {
-      let name = first,
-        value: boolean = last;
+      let name = first, value: boolean = last;
       if (!value) this.remove(name);
       else this.putIgnoreCase(first, null);
     }
@@ -220,7 +216,9 @@ export class Attributes extends ArrayList<Attribute> {
    */
   putIgnoreCase(name: string, value: string) {
     let attr = this.get(name, true);
-    if (Objects.isNull(attr)) this.add(name, value);
+    if (Objects.isNull(attr)) {
+		return this.add(name, value);
+	}
     else {
       attr.setValue(value);
       attr.setName(name);
@@ -252,12 +250,13 @@ export class Attributes extends ArrayList<Attribute> {
    * @return HTML
    */
   html(): string {
-    let sb = new StringBuilder();
-    let setting = new Document("").outputSetting;
-    return this.htmlImpl(sb, setting).toString();
+    throw Error(`html(): string`);
+    // let sb = new StringBuilder();
+    // let setting = new Document("").outputSetting;
+    // return this.htmlImpl(sb, setting).toString();
   }
 
-  htmlImpl(accum: StringBuilder, setting: OutputSetting): StringBuilder {
+  htmlImpl(accum: StringBuilder, setting: any): StringBuilder {
     for (let i = 0; i < this.size(); i++) {
       let attr = this.get(i);
       if (Attributes.isInternalKey(attr.getName())) continue;
@@ -270,15 +269,15 @@ export class Attributes extends ArrayList<Attribute> {
       // collapse checked=null, checked="", checked=checked; write out others
       if (!Attribute.shouldCollapseAttribute(key, val, setting)) {
         accum.append('="');
-        Entities.escapeImpl(
+        throw Error(`Entities.escapeImpl(
           accum,
           Objects.isNull(val) ? "" : val,
           setting,
           true,
           false,
           false
-        );
-        accum.append('"');
+        
+        accum.append('"');)`);
       }
     }
 
@@ -305,10 +304,10 @@ export class Attributes extends ArrayList<Attribute> {
 
   /**
    * Internal method. Removes duplicate attribute by name. Settings for case sensitivity of key names.
-   * @param settings case sensitivity
+   * @param {ParseSetting} settings case sensitivity
    * @return number of removed dupes
    */
-  deduplicate(setting: ParseSetting): number {
+  deduplicate(setting: any): number {
     if (this.isEmpty()) return 0;
     else {
       let preserve = setting.preserveAttributeCase;

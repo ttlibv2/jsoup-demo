@@ -4,12 +4,17 @@ import { Objects } from "../helper/Objects";
 import { StringBuilder } from "../helper/StringBuilder";
 import { StringUtil } from "../helper/StringUtil";
 import { OutputSetting } from "../parse/Setting";
-import { LeafNode } from "./LeafNode";
+import { Node } from "./1004_Node";
+import { LeafNode } from "./1006_LeafNode";
 
 /**
  * A {@code <!DOCTYPE>} node.
  */
 export class DocumentType extends LeafNode {
+  static is(node: Node): node is DocumentType {
+    return node instanceof DocumentType;
+  }
+
   // static readonly PUBLIC_KEY = "PUBLIC";
   // static readonly SYSTEM_KEY = "SYSTEM";
   // static readonly NAME = "name";

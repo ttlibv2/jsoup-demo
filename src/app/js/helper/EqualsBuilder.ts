@@ -81,7 +81,12 @@ export class EqualsBuilder {
 
 	private appendObject(lhs: object, rhs: object, useEqual: boolean = true): this {
 		if (!this.equal) return this;
-		else for (let prop in lhs) this.append(lhs[prop], rhs[prop], useEqual);
+		else {
+			for (let prop in lhs) {
+				this.append(lhs[prop], rhs[prop], useEqual);
+			}
+			return this;
+		}
 	}
 
 	private appendAllImpl(lhs: any, rhs: any): this {

@@ -1,5 +1,5 @@
 import { ArrayList } from '../helper/ArrayList';
-import { Node } from './Node';
+import { Node } from './1004_Node';
 
 export class NodeList extends ArrayList<Node> {
 

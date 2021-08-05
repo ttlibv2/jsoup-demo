@@ -1,17 +1,16 @@
 import { Assert } from "../helper/Assert";
-import { Parser } from "../parse/Parser";
-import { OutputSetting, ParseSetting } from "../parse/Setting";
+import { ParseSetting, OutputSetting } from "../parse/Setting";
 import { Tag } from "../parse/Tag";
 import { DocumentType } from "./DocumentType";
 import { Element } from "./Element";
-import { LeafNode } from "./LeafNode";
-import * as NSEvaluator from "../select/Evaluator";
+import { LeafNode } from "./1006_LeafNode";
 import { StringUtil } from "../helper/StringUtil";
 import { Objects } from "../helper/Objects";
 import { ArrayList } from "../helper/ArrayList";
 import { TextNode } from "./TextNode";
-import { Node } from "./Node";
-import { XmlDeclaration } from "./XmlDeclaration";
+import { Node } from "./1004_Node";
+import { Parser } from "../parse/Parser";
+// import * as EvaluatorNS from "../select/Evaluator";
 
 export enum QuirksMode {
   noQuirks,
@@ -23,7 +22,12 @@ export enum QuirksMode {
  * A HTML Document.
  */
 export class Document extends Element {
-  static readonly titleEval = new NSEvaluator.Tag("title");
+
+  static isDoc(node: any): boolean {
+    return node instanceof Document;
+  }
+
+  static readonly titleEval: any = undefined;// = new EvaluatorNS.Tag("title");
 
   outputSetting: OutputSetting;
   quirksMode: QuirksMode = QuirksMode.noQuirks;
@@ -43,9 +47,9 @@ export class Document extends Element {
   }
 
   /** @override */
-  parser(): Parser;
-  parser(parser: Parser): this;
-  parser(parser?: Parser): any {
+  parser(): any;
+  parser(parser: any): this;
+  parser(parser?: any): any {
     if (parser === undefined) return this.parserImpl;
     else {
       this.parserImpl = Assert.notNull(parser);
@@ -277,43 +281,44 @@ export class Document extends Element {
    * </ul>
    */
   private ensureMetaCharsetElement() {
-    if (this._updateMetaCharset) {
-      let syntax = this.outputSetting.syntax;
+    throw Error(`ensureMetaCharsetElement`);
+    // if (this._updateMetaCharset) {
+    //   let syntax = this.outputSetting.syntax;
 
-      // is html
-      if (syntax === "html") {
-        let metaCharset = this.selectFirst("meta[charset]");
-        if (Objects.notNull(metaCharset))
-          metaCharset.attr("charset", this.charset);
-        else this.head().appendElement("meta").attr("charset", this.charset);
-        this.select("meta[name=charset]").remove(); // Remove obsolete elements
-      }
+    //   // is html
+    //   if (syntax === "html") {
+    //     let metaCharset = this.selectFirst("meta[charset]");
+    //     if (Objects.notNull(metaCharset))
+    //       metaCharset.attr("charset", this.charset);
+    //     else this.head().appendElement("meta").attr("charset", this.charset);
+    //     this.select("meta[name=charset]").remove(); // Remove obsolete elements
+    //   }
 
-      // is xml
-      else if (syntax === "xml") {
-        let node = this.childNodes().get(0);
-        if (node instanceof XmlDeclaration) {
-          let decl = node;
+    //   // is xml
+    //   else if (syntax === "xml") {
+    //     let node = this.childNodes().get(0);
+    //     if (node instanceof XmlDeclaration) {
+    //       let decl = node;
 
-          // xml
-          if (decl.name() === "xml") {
-            decl.attr("encoding", this.charset);
-            if (decl.hasAttr("version")) decl.attr("version", "1.0");
-          } else {
-            decl = new XmlDeclaration("xml", false);
-            decl.attr("version", "1.0");
-            decl.attr("encoding", this.charset);
-            this.prependChild(decl);
-          }
-        } //
-        else {
-          let decl = new XmlDeclaration("xml", false);
-          decl.attr("version", "1.0");
-          decl.attr("encoding", this.charset);
-          this.prependChild(decl);
-        }
-      }
-    }
+    //       // xml
+    //       if (decl.name() === "xml") {
+    //         decl.attr("encoding", this.charset);
+    //         if (decl.hasAttr("version")) decl.attr("version", "1.0");
+    //       } else {
+    //         decl = new XmlDeclaration("xml", false);
+    //         decl.attr("version", "1.0");
+    //         decl.attr("encoding", this.charset);
+    //         this.prependChild(decl);
+    //       }
+    //     } //
+    //     else {
+    //       let decl = new XmlDeclaration("xml", false);
+    //       decl.attr("version", "1.0");
+    //       decl.attr("encoding", this.charset);
+    //       this.prependChild(decl);
+    //     }
+    //   }
+    // }
   }
 
   // merge multiple <head> or <body> contents into one, delete the remainder, and ensure they are owned by <html>

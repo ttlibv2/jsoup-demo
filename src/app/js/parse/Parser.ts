@@ -1,7 +1,7 @@
 import { Assert } from '../helper/Assert';
 import { Document } from '../nodes/Document';
-import { Element } from '../nodes/Element';
-import { Node } from '../nodes/Node';
+// import { ElementNS } from '../nodes/1005_ElementNS';
+import { Node } from '../nodes/1004_Node';
 import { ParseSetting } from './Setting';
 import { ParseErrorList } from './ParseError';
 import { Tokeniser } from './Tokeniser';
@@ -81,11 +81,11 @@ export class Parser {
 	/**
 	 * Parse fragment to list node
 	 * @param {string} fragmentHtml the fragment of HTML to parse
-	 * @param {Element} context
+	 * @param {ElementNS} context
 	 * @param {string=} baseUri
 	 * @return {Node[]}
 	 */
-	parseFragment(fragmentHtml: string, context: Element, baseUri?: string): Node[] {
+	parseFragment(fragmentHtml: string, context: any, baseUri?: string): Node[] {
 		return this.treeBuilder.parseFragment(fragmentHtml, context, baseUri, this);
 	}
 
@@ -114,14 +114,14 @@ export class Parser {
 
 	static parseBodyFragment(bodyHtml: string, baseUri?: string): Document {
 		let doc = Document.createShell(baseUri);
-        let body: Element = doc.body();
+        let body = doc.body();
         let nodes = Parser.parseFragment(bodyHtml, body, baseUri);
 		nodes.slice().reverse().forEach(node => node.remove());
 		nodes.forEach(node => body.appendChild(node));
         return doc;
 	}
 
-	static parseFragment(fragmentHtml: string, context: Element, baseUri: string) {
+	static parseFragment(fragmentHtml: string, context: any, baseUri: string) {
 		let treeBuilder = new HtmlBuilder();
         return treeBuilder.parseFragment(fragmentHtml, context, baseUri, new Parser(treeBuilder));
 	}
@@ -130,7 +130,7 @@ export class Parser {
 	 * Get the parser that was used to make this node,
 	 * or the default HTML parser if it has no parent.
 	 */
-	static getParserForNode(node: Node): Parser {
+	static forNode(node: Node): Parser {
 		let doc = node.getOwnerDocument();
 		return doc?.parser() || Parser.htmlParser();
 	}

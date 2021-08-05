@@ -3,7 +3,7 @@ import { Objects } from '../helper/Objects';
 import { Attributes } from '../nodes/Attributes';
 import { Document } from '../nodes/Document';
 import { Element } from '../nodes/Element';
-import { Node } from '../nodes/Node';
+import { Node } from '../nodes/1004_Node';
 import { CharacterReader } from './CharacterReader';
 import { ParseError } from './ParseError';
 import { Parser } from './Parser';
@@ -39,7 +39,7 @@ export abstract class TreeBuilder {
 		this.reader = new CharacterReader(input);
 		this.currentToken = null;
 		this.tokeniser = new Tokeniser(this.reader, parser.errors);
-		this.stack = Array(32);
+		this.stack = Array();
 		this.baseUri = baseUri;
 	}
 
@@ -47,7 +47,12 @@ export abstract class TreeBuilder {
 		this.initialiseParse(input, baseUri, parser);
 		try {
 			this.runParser();
-		} finally {
+		} 
+		catch(ex){
+			console.log(`Loi`);
+			throw ex;
+		}
+		finally {
 			this.reader.close();
 			this.reader = null;
 			this.tokeniser = null;
@@ -106,7 +111,7 @@ export abstract class TreeBuilder {
 	protected error(msg: string | any): void {
 		let errors = this.parser.errors;
 		if (errors.canAddError()) {
-			errors.push(new ParseError(this.reader.pos(), msg));
+			errors.add(new ParseError(this.reader.pos(), msg));
 		}
 	}
 

@@ -5,7 +5,7 @@ import { Objects } from "../helper/Objects";
  */
 export class Normalizer {
   static lowerCase(input: string): string {
-    return Objects.isNull(input) ? "" : input.toUpperCase();
+    return Objects.isNull(input) ? "" : input.toLowerCase();
   }
 
   static normalize(input: string, isStringLiteral?: boolean): string {

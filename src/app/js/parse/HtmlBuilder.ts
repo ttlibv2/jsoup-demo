@@ -1,11 +1,10 @@
 import { Element } from "../nodes/Element";
-import { Node } from "../nodes/Node";
+import { Node } from "../nodes/1004_Node";
 import { Parser } from "./Parser";
 import { ParseSetting } from "./Setting";
 import { TreeBuilder } from "./TreeBuilder";
-import { FormElement } from "../nodes/FormElement";
+import { FormElement} from "../nodes/FormElement";
 import { Tag } from "./Tag";
-import { NodeUtils } from "../helper/NodeUtils";
 import { Assert } from "../helper/Assert";
 import { Document } from "../nodes/Document";
 import { ParseError } from "./ParseError";
@@ -142,7 +141,7 @@ export class HtmlBuilder extends TreeBuilder {
   private fosterInserts: boolean; // if next inserts should be fostered
   private fragmentParsing: boolean; // if parsing a fragment of html
 
-  defaultSetting(): ParseSetting {
+  defaultSetting(): ParseSetting { 
     return ParseSetting.htmlDefault;
   }
 
@@ -200,7 +199,7 @@ export class HtmlBuilder extends TreeBuilder {
 
       // update form el
       this.formElement = <any>(
-        contextChain.find((el) => el instanceof FormElement)
+       contextChain.find((el) => el instanceof FormElement)
       );
     }
 
@@ -293,10 +292,9 @@ export class HtmlBuilder extends TreeBuilder {
 
   error(state: HtmlState | string): void {
     if (this.parser.errors.canAddError()) {
-      let errorMsg = Objects.isString(state)
-        ? state
-        : `'Unexpected token [${this.currentToken.tokenType}] when in state [${state}]`;
-      this.parser.errors.push(new ParseError(this.reader.pos(), errorMsg));
+      let errorMsg = `Unexpected token [${this.currentToken.tokenType}] when in state [${state}]`;
+	  if(Objects.isString(state)) errorMsg = state;
+      this.parser.errors.add(new ParseError(this.reader.pos(), errorMsg));
     }
   }
 
@@ -316,7 +314,7 @@ export class HtmlBuilder extends TreeBuilder {
       // cleanup duplicate attributes:
       if (startTag.hasAttributes() && !startTag.attributes.isEmpty()) {
         let dupes = startTag.attributes.deduplicate(this.setting);
-        if (dupes > 0) this.error("Duplicate attribute");
+        if (dupes > 0) throw this.error("Duplicate attribute");
       }
 
       // handle empty unknown tags
@@ -335,6 +333,9 @@ export class HtmlBuilder extends TreeBuilder {
         return this.insert(new Element(tag, null, attrs));
       }
     }
+	
+	  else throw Error(`@arguments not support!!`);
+	
   }
 
   insertEmpty(startTag: TK.StartTag): Element {
@@ -401,7 +402,7 @@ export class HtmlBuilder extends TreeBuilder {
     //
 
     // object is Element
-    if (NodeUtils.isElement(object)) {
+    if (Element.is(object)) {
       let el = this.insertNode(object);
       this.stack.push(el);
       return el;
@@ -630,14 +631,11 @@ export class HtmlBuilder extends TreeBuilder {
     if (Array.isArray(target))
       return this.inSpecificScope(target, HtmlBuilder.TagsSearchInScope, null);
     else if (typeof target === "string") {
-      return this.inSpecificScope(
-        target,
-        HtmlBuilder.TagsSearchInScope,
-        extras || null
-      );
+      return this.inSpecificScope(target,HtmlBuilder.TagsSearchInScope,extras || null );
       // todo: in mathml namespace: mi, mo, mn, ms, mtext annotation-xml
       // todo: in svg namespace: forignOjbect, desc, title
     }
+	else throw Error(`@arguments [inScope(target: string | string[], extras?: string[])]`);
   }
 
   inListItemScope(targetName: string): boolean {
@@ -664,8 +662,10 @@ export class HtmlBuilder extends TreeBuilder {
       if (!Objects.inSorted(elName, HtmlBuilder.TagSearchSelectScope))
         return false;
     }
-    Assert.fail("Should not be reachable");
+    
+	//Assert.fail("Should not be reachable");
     //return false;
+	throw Error(`Should not be reachable`);
   }
 
   setHeadElement(headElement: Element): void {

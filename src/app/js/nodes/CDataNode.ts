@@ -12,7 +12,7 @@ export class CDataNode extends TextNode {
 	 * @param text
 	 */
 	/* eslint-disable */
-	constructor(text: string) {
+	constructor(text: string) { 
 		super(text);
 	}
 

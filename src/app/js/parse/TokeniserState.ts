@@ -10,8 +10,8 @@ export abstract class TokeniserState  {
 	static readonly nullChar: Char = Char.Default;
 	static readonly attributeNameCharsSorted: Char[] = Char.of(['\t', '\n', '\f', '\r', ' ', '"', "'", '/', '<', '=', '>']);
 	static readonly attributeValueUnquoted: Char[] = Char.of(['\u0000', '\t', '\n', '\f', '\r', ' ', '"', '&', "'", '<', '=', '>', '`']);
-	static readonly replacementChar: Char = Tokeniser.replacementChar;
-	static readonly replacementStr: string = Tokeniser.replacementChar.string;
+	static get replacementChar(): Char { return Tokeniser.replacementChar; }
+	//static readonly replacementStr: string = Tokeniser.replacementChar.string;
 	static readonly eof: string = CharacterReader.EOF.string;
 
 	/**
@@ -67,7 +67,7 @@ export abstract class TokeniserState  {
 			case TokeniserState.nullChar.string:
 				t.error(current);
 				r.advance();
-				t.emit(TokeniserState.replacementStr);
+				t.emit(TokeniserState.replacementChar);
 				break;
 			case TokeniserState.eof:
 				t.emit(new NSToken.EOF());
@@ -179,7 +179,7 @@ class Rcdata extends TokeniserState {
 			case TokeniserState.nullChar.string:
 				t.error(this);
 				r.advance();
-				t.emit(TokeniserState.replacementStr);
+				t.emit(TokeniserState.replacementChar);
 				break;
 			case TokeniserState.eof:
 				t.emit(new NSToken.EOF());
@@ -220,7 +220,7 @@ class PLAINTEXT extends TokeniserState {
 			case TokeniserState.nullChar.string:
 				t.error(this);
 				r.advance();
-				t.emit(TokeniserState.replacementStr);
+				t.emit(TokeniserState.replacementChar);
 				break;
 			case TokeniserState.eof:
 				t.emit(new NSToken.EOF());
@@ -309,7 +309,7 @@ class TagName extends TokeniserState {
 				t.transition(Data.instance);
 				break;
 			case TokeniserState.nullChar.string: // replacement
-				t.tagPending.appendTagName(TokeniserState.replacementStr);
+				t.tagPending.appendTagName(TokeniserState.replacementChar);
 				break;
 			case TokeniserState.eof: // should emit pending tag?
 				t.eofError(this);

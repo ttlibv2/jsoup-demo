@@ -307,7 +307,7 @@ export class CharacterReader {
 	}
 
 	matchConsume(seq: string): boolean {
-		if (this.matchConsume(seq)) {
+		if (this.matches(seq)) {
 			this.bufPos += seq.length;
 			return true;
 		} else return false;

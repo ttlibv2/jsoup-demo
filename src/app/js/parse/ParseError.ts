@@ -1,3 +1,5 @@
+import { ArrayList } from "../helper/ArrayList";
+
 export class ParseError {
 	//
 
@@ -13,7 +15,7 @@ export class ParseError {
 	}
 }
 
-export class ParseErrorList extends Array<ParseError> {
+export class ParseErrorList extends ArrayList<ParseError> {
 	static readonly INITIAL_CAPACITY = 16;
 
 	/**
@@ -21,15 +23,13 @@ export class ParseErrorList extends Array<ParseError> {
 	 * @param initialCapacity
 	 * @param maxSize
 	 */
-	constructor(
-		private readonly initialCapacity: number, //
-		private readonly maxSize: number,
-	) {
+	constructor(private readonly initialCapacity: number, //
+		private readonly maxSize: number) {
 		super(initialCapacity);
 	}
 
 	canAddError() {
-		return this.length < this.maxSize;
+		return this.size() < this.maxSize;
 	}
 
 	getMaxSize() {

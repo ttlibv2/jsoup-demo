@@ -1,5 +1,6 @@
 import { Assert } from "../helper/Assert";
 import { Objects } from "../helper/Objects";
+import { Node } from "../nodes/1004_Node";
 import { Attributes } from "../nodes/Attributes";
 import { CoreCharset, Entities, EscapeMode } from "../nodes/Entities";
 
@@ -10,6 +11,17 @@ export class CharsetEncoder {
 }
 
 export class OutputSetting {
+
+  /**
+	 * Get the output setting for this node,  or if this node has no document
+	 * (or parent), retrieve the default output
+	 * settings
+	 */
+	static forNode(node: Node): OutputSetting {
+		let owner = node.getOwnerDocument() ;
+		return owner?.outputSetting || OutputSetting.instance;
+	}
+
   private _escapeMode: EscapeMode = EscapeMode.base;
   private _charset: string = "utf-8";
   private _coreCharset: CoreCharset; // fast encoders for ascii and utf8

@@ -1,13 +1,13 @@
-/*eslint-disable */
+/*8eslint-disable */
 import { ArrayList } from "../helper/ArrayList";
 import { Assert } from "../helper/Assert";
-import { NodeUtils } from "../helper/NodeUtils";
 import { Normalizer } from "../helper/Normalizer";
 import { Objects } from "../helper/Objects";
+import { Comment } from "../nodes/Comment";
 import { Document } from "../nodes/Document";
+import { DocumentType } from "../nodes/DocumentType";
 import { Element } from "../nodes/Element";
-import { PseudoTextElement } from "../nodes/PseudoTextElement";
-import {Tag as TagNode} from '../parse/Tag';
+import { XmlDeclaration } from "../nodes/XmlDeclaration";
 
 /**
  * Evaluates that an element matches the selector.
@@ -430,9 +430,9 @@ export class Or extends CombiningEvaluator {
 /** Abstract evaluator for sibling index matching */
 export abstract class IndexEvaluator extends Evaluator {
 
-	/**
-	 * @param {number} index 
-	 */
+  /**
+   * @param {number} index 
+   */
   constructor(protected index: number) {
     super();
   }
@@ -490,10 +490,10 @@ export class IndexEquals extends IndexEvaluator {
 export class IsLastChild extends Evaluator {
 
   matches(root: Element, element: Element): boolean {
-		let p = element.parent();
-		if(Objects.isNull(p)) return false;
-		if(p instanceof Document) return false;
-		else return p.elementSiblingIndex() === p.children().size()-1;
+    let p = element.parent();
+    if (Objects.isNull(p)) return false;
+    if (p instanceof Document) return false;
+    else return p.elementSiblingIndex() === p.children().size() - 1;
   }
 
   toString(): string {
@@ -526,7 +526,7 @@ export abstract class CssNthEvaluator extends Evaluator {
 
   matches(root: Element, element: Element): boolean {
     let p = element.parent();
-    if (Objects.isNull(p) || NodeUtils.isDocument(p)) return false;
+    if (Objects.isNull(p) || Document.isDoc(p)) return false;
     else {
       let pos = this.calculatePosition(root, element);
       if (this.a === 0) return pos === this.b;
@@ -535,8 +535,8 @@ export abstract class CssNthEvaluator extends Evaluator {
   }
 
   toString(): string {
-    let ps = this.getPseudoClass(),  a = this.a,  b = this.b;
-    return a === 0  ? `:${ps}(${b})` : b === 0  ? `:${ps}(${a}n)` : `:${ps}(${a}n+${b})`;
+    let ps = this.getPseudoClass(), a = this.a, b = this.b;
+    return a === 0 ? `:${ps}(${b})` : b === 0 ? `:${ps}(${a}n)` : `:${ps}(${a}n+${b})`;
   }
 }
 
@@ -550,18 +550,18 @@ export class IsNthOfType extends CssNthEvaluator {
     return `nth-of-type`;
   }
 
-	calculatePosition(root: Element, element: Element): number {
-		let pos = 0;
-		if(Objects.isNull(element.parent())) return 0;
-		else {
-			let family = element.parent().children();
-			for(let el of family) {
-				if(el.tag().equals(element.tag())) pos++;
-				if(el === element) break;
-			}
-			return pos;
-		}
-	}
+  calculatePosition(root: Element, element: Element): number {
+    let pos = 0;
+    if (Objects.isNull(element.parent())) return 0;
+    else {
+      let family = element.parent().children();
+      for (let el of family) {
+        if (el.tag().equals(element.tag())) pos++;
+        if (el === element) break;
+      }
+      return pos;
+    }
+  }
 }
 
 /**
@@ -570,13 +570,13 @@ export class IsNthOfType extends CssNthEvaluator {
  */
 export class IsFirstOfType extends IsNthOfType {
 
-	constructor() {
-		super(0, 1);
-	}
+  constructor() {
+    super(0, 1);
+  }
 
-	getPseudoClass(): string {
-		return `:first-of-type`;
-	}
+  getPseudoClass(): string {
+    return `:first-of-type`;
+  }
 
 }
 
@@ -587,27 +587,27 @@ export class IsFirstOfType extends IsNthOfType {
  * @match `:nth-last-of-type(an+b)`
  * @example `img:nth-last-of-type(2n+1)`
  */
-export class IsLastOfType extends CssNthEvaluator  {
+export class IsLastOfType extends CssNthEvaluator {
 
-	constructor() {
-		super(0, 1);
+  constructor() {
+    super(0, 1);
   }
-  
-	calculatePosition(root: Element, element: Element): number {
-		let pos = 0;
-		if(Objects.isNull(element.parent())) return 0;
-		else {
-			let family = element.parent().children();
-			for (let i = element.elementSiblingIndex(); i < family.size(); i++) {
-				if (family.get(i).tag().equals(element.tag())) pos++;
-			}
-			return pos;
-		}
-	}
 
-	getPseudoClass(): string {
-		return `nth-last-of-type`;
-	}
+  calculatePosition(root: Element, element: Element): number {
+    let pos = 0;
+    if (Objects.isNull(element.parent())) return 0;
+    else {
+      let family = element.parent().children();
+      for (let i = element.elementSiblingIndex(); i < family.size(); i++) {
+        if (family.get(i).tag().equals(element.tag())) pos++;
+      }
+      return pos;
+    }
+  }
+
+  getPseudoClass(): string {
+    return `nth-last-of-type`;
+  }
 
 }
 
@@ -631,13 +631,13 @@ export class IsLastOfType extends CssNthEvaluator  {
  */
 export class IsNthChild extends CssNthEvaluator {
 
-	calculatePosition(root: Element, element: Element): number {
-		return element.elementSiblingIndex() + 1;
-	}
+  calculatePosition(root: Element, element: Element): number {
+    return element.elementSiblingIndex() + 1;
+  }
 
-	getPseudoClass(): string {
-		return `nth-child`;
-	}
+  getPseudoClass(): string {
+    return `nth-child`;
+  }
 }
 
 /**
@@ -649,12 +649,12 @@ export class IsNthLastChild extends CssNthEvaluator {
 
   getPseudoClass(): string {
     return `nth-last-child`;
-	}
-	
+  }
+
   calculatePosition(root: Element, element: Element): number {
-		let p = element.parent();
-		if(Objects.isNull(p))return 0;
-		else p.children().size() - element.elementSiblingIndex();
+    let p = element.parent();
+    if (Objects.isNull(p)) return 0;
+    else return p.children().size() - element.elementSiblingIndex();
   }
 }
 
@@ -669,20 +669,20 @@ export class IsNthLastOfType extends CssNthEvaluator {
 
   getPseudoClass(): string {
     return `nth-last-of-type`;
-	}
-	
+  }
+
   calculatePosition(root: Element, element: Element): number {
     let pos = 0;
-		if(Objects.isNull(element.parent())) return 0;
-		else {
-			let family = element.parent().children();
-			for (let i = element.elementSiblingIndex(); i < family.size(); i++) {
-				if (family.get(i).tag().equals(element.tag())) pos++;
-			}
-			return pos;
-		}
-	}
-	
+    if (Objects.isNull(element.parent())) return 0;
+    else {
+      let family = element.parent().children();
+      for (let i = element.elementSiblingIndex(); i < family.size(); i++) {
+        if (family.get(i).tag().equals(element.tag())) pos++;
+      }
+      return pos;
+    }
+  }
+
 }
 
 /**
@@ -694,13 +694,13 @@ export class IsFirstChild extends Evaluator {
 
   toString(): string {
     return `:first-child`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
-		let p = element.parent();
-		if(Objects.isNull(p)) return false;
-		if(NodeUtils.isDocument(p)) return false;
-		else return element.elementSiblingIndex() === 0;
+    let p = element.parent();
+    if (Objects.isNull(p)) return false;
+    if (Document.isDoc(p)) return false;
+    else return element.elementSiblingIndex() === 0;
   }
 }
 
@@ -711,14 +711,14 @@ export class IsFirstChild extends Evaluator {
  */
 export class IsRoot extends Evaluator {
 
-	toString(): string {
-		return `:root`;
-	}
+  toString(): string {
+    return `:root`;
+  }
 
-	matches(root: Element, element: Element): boolean {
-		let r = NodeUtils.isDocument(root) ? root.child(0) : root;
-		return element === r;
-	}
+  matches(root: Element, element: Element): boolean {
+    let r = Document.isDoc(root) ? root.child(0) : root;
+    return element === r;
+  }
 
 }
 
@@ -730,13 +730,13 @@ export class IsOnlyChild extends Evaluator {
 
   toString(): string {
     return `:only-child`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
-		let p = element.parent();
-		if(Objects.isNull(p)) return false;
-		if(NodeUtils.isDocument(p)) return false;
-		else return element.siblingElements().isEmpty();
+    let p = element.parent();
+    if (Objects.isNull(p)) return false;
+    if (Document.isDoc(p)) return false;
+    else return element.siblingElements().isEmpty();
   }
 }
 
@@ -748,17 +748,17 @@ export class IsOnlyOfType extends Evaluator {
 
   toString(): string {
     return `:only-of-type`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
-		let p:Element = element.parent();
-		if(Objects.isNull(p)) return false;
-		else if(p instanceof Document) return false;
-		else {
-			let family = p.children(), pos=0;
-			for(let el of family) pos++;
-			return pos === 1;
-		}
+    let p: Element = element.parent();
+    if (Objects.isNull(p)) return false;
+    else if (p instanceof Document) return false;
+    else {
+      let family = p.children(), pos = 0;
+      for (let el of family) pos++;
+      return pos === 1;
+    }
   }
 }
 
@@ -770,11 +770,11 @@ export class IsEmpty extends Evaluator {
 
   toString(): string {
     return `:empty`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
-		let family = element.childNodes();
-		return !family.some(n => !(NodeUtils.isComment(n) || NodeUtils.isXmlDeclaration(n) || NodeUtils.isDocumentType(n)))
+    let family = element.childNodes();
+    return !family.some(n => !(Comment.is(n) || XmlDeclaration.is(n) || DocumentType.is(n)))
   }
 }
 
@@ -787,18 +787,18 @@ export class IsEmpty extends Evaluator {
 export class ContainsText extends Evaluator {
 
   constructor(private searchText: string) {
-		super();
-		this.searchText = Normalizer.lowerCase(searchText);
-	}
-	
+    super();
+    this.searchText = Normalizer.lowerCase(searchText);
+  }
+
   toString(): string {
     return `:contains(${this.searchText})`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
     return Normalizer.lowerCase(element.text()).includes(this.searchText);
-	}
-	
+  }
+
 }
 
 /**
@@ -810,15 +810,15 @@ export class ContainsText extends Evaluator {
  */
 export class ContainsData extends Evaluator {
 
-	constructor(private searchText: string) {
-		super();
-		this.searchText = Normalizer.lowerCase(searchText);
-	}
+  constructor(private searchText: string) {
+    super();
+    this.searchText = Normalizer.lowerCase(searchText);
+  }
 
   toString(): string {
     return `:containsData(${this.searchText})`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
     return Normalizer.lowerCase(element.data()).includes(this.searchText);
   }
@@ -833,18 +833,18 @@ export class ContainsData extends Evaluator {
 export class ContainsOwnText extends Evaluator {
 
   constructor(private searchText: string) {
-		super();
-		this.searchText = Normalizer.lowerCase(searchText);
-	}
-	
+    super();
+    this.searchText = Normalizer.lowerCase(searchText);
+  }
+
   toString(): string {
     return `:containsOwn(${this.searchText})`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
     return Normalizer.lowerCase(element.ownText()).includes(this.searchText);
-	}
-	
+  }
+
 }
 
 /**
@@ -856,21 +856,21 @@ export class ContainsOwnText extends Evaluator {
  * - `div:matches((?i)login)` finds divs containing the text, case insensitively.
  */
 export class Matches extends Evaluator {
-	private readonly regex: RegExp;
+  private readonly regex: RegExp;
 
   constructor(pattern: string | RegExp) {
-		super();
-		this.regex = new RegExp(pattern);
-	}
-	
+    super();
+    this.regex = new RegExp(pattern);
+  }
+
   toString(): string {
     return `:matches(${this.regex})`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
-   return this.regex.test(element.text());
-	}
-	
+    return this.regex.test(element.text());
+  }
+
 }
 
 /**
@@ -882,21 +882,21 @@ export class Matches extends Evaluator {
  * - `div:matchesOwn((?i)login)` finds divs containing the text, case insensitively.
  */
 export class MatchesOwn extends Evaluator {
-	private readonly regex: RegExp;
+  private readonly regex: RegExp;
 
-	constructor(pattern: string | RegExp) {
-		super();
-		this.regex = new RegExp(pattern);
-	}
-	
+  constructor(pattern: string | RegExp) {
+    super();
+    this.regex = new RegExp(pattern);
+  }
+
   toString(): string {
     return `:matchesOwn(regex)`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
     return this.regex.test(element.ownText());
-	}
-	
+  }
+
 }
 
 /**
@@ -909,22 +909,23 @@ export class MatchText extends Evaluator {
 
   toString(): string {
     return `:matchText`;
-	}
-	
+  }
+
   matches(root: Element, element: Element): boolean {
-		if(element instanceof PseudoTextElement) return true;
-		else {
-			let textNodes = element.textNodes();
-			for(let node of textNodes) {
-				let tag = TagNode.valueOf(element.tagName());
-				let pel = new PseudoTextElement(tag, element.getBaseUri(), element.attributes());
-				node.replaceWith(pel);
-        pel.appendChild(node);
-			}
-			return false;
-		}
-	}
-	
+    // if(element instanceof PseudoTextElement) return true;
+    // else {
+    // 	let textNodes = element.textNodes();
+    // 	for(let node of textNodes) {
+    // 		let tag = TagNode.valueOf(element.tagName());
+    // 		let pel = new PseudoTextElement(tag, element.getBaseUri(), element.attributes());
+    // 		node.replaceWith(pel);
+    //     pel.appendChild(node);
+    // 	}
+    // 	return false;
+    // }
+    throw Error(`class MatchText extends Evaluator`);
+  }
+
 }
 
 
@@ -933,144 +934,144 @@ export class MatchText extends Evaluator {
 //----------------------------------------------------
 
 export abstract class StructuralEvaluator extends Evaluator {
-	evaluator: Evaluator;
+  evaluator: Evaluator;
 }
 
 export class Root extends StructuralEvaluator {
 
-	matches(root: Element, element: Element): boolean {
-		return root === element;
-	}
+  matches(root: Element, element: Element): boolean {
+    return root === element;
+  }
 
-	toString(): string {
-		throw new Error("Method not implemented.");
-	}
+  toString(): string {
+    throw new Error("Method not implemented.");
+  }
 
 }
 
 export class Has extends StructuralEvaluator {
 
-	constructor(evaluator: Evaluator) {
-		super();
-		this.evaluator = evaluator;
-	}
+  constructor(evaluator: Evaluator) {
+    super();
+    this.evaluator = evaluator;
+  }
 
-	matches(root: Element, element: Element): boolean {
-		return element.getAllElements().some(el => el !== element && this.evaluator.matches(element, el));
-	}
+  matches(root: Element, element: Element): boolean {throw new Error("Method not implemented.");
+    // return element.getAllElements().some(el => el !== element && this.evaluator.matches(element, el));
+  }
 
-	toString(): string {
-		return `:has(${this.evaluator})`;
-	}
+  toString(): string {
+    return `:has(${this.evaluator})`;
+  }
 
 }
 
 export class Not extends StructuralEvaluator {
 
-	constructor(evaluator: Evaluator) {
-		super();
-		this.evaluator = evaluator;
-	}
+  constructor(evaluator: Evaluator) {
+    super();
+    this.evaluator = evaluator;
+  }
 
-	matches(root: Element, element: Element): boolean {
-		return !this.evaluator.matches(root, element);
-	}
+  matches(root: Element, element: Element): boolean {
+    return !this.evaluator.matches(root, element);
+  }
 
-	toString(): string {
-		return `:not(${this.evaluator})`;
-	}
+  toString(): string {
+    return `:not(${this.evaluator})`;
+  }
 
 }
 
 export class Parent extends StructuralEvaluator {
 
-	constructor(evaluator: Evaluator) {
-		super();
-		this.evaluator = evaluator;
-	}
+  constructor(evaluator: Evaluator) {
+    super();
+    this.evaluator = evaluator;
+  }
 
-	matches(root: Element, element: Element): boolean {
-		if (root === element) return false;
-		else {
-			let parent = element.parent();
-			while (parent != null) {
-				if (this.evaluator.matches(root, parent)) return true;
-				if (parent === root) break;
-				parent = parent.parent();
-			}
-			return false;
-		}
-	}
+  matches(root: Element, element: Element): boolean {
+    if (root === element) return false;
+    else {
+      let parent = element.parent();
+      while (parent != null) {
+        if (this.evaluator.matches(root, parent)) return true;
+        if (parent === root) break;
+        parent = parent.parent();
+      }
+      return false;
+    }
+  }
 
-	toString(): string {
-		return `${this.evaluator} `;
-	}
-
-}
-
-export class ImmediateParent  extends StructuralEvaluator {
-
-	constructor(evaluator: Evaluator) {
-		super();
-		this.evaluator = evaluator;
-	}
-
-	matches(root: Element, element: Element): boolean {
-		if (root === element) return false;
-		else {
-			let parent = element.parent();
-			return Objects.notNull(parent) && this.evaluator.matches(root, parent);
-		}
-	}
-
-	toString(): string {
-		return `${this.evaluator} > `;
-	}
+  toString(): string {
+    return `${this.evaluator} `;
+  }
 
 }
 
-export class PreviousSibling  extends StructuralEvaluator {
+export class ImmediateParent extends StructuralEvaluator {
 
-	constructor(evaluator: Evaluator) {
-		super();
-		this.evaluator = evaluator;
-	}
+  constructor(evaluator: Evaluator) {
+    super();
+    this.evaluator = evaluator;
+  }
 
-	matches(root: Element, element: Element): boolean {
-		if (root === element) return false;
-		else {
-			let prev = element.previousElementSibling();
-			while (Objects.notNull(prev)) {
-				if (this.evaluator.matches(root, prev)) return true;
-				prev = prev.previousElementSibling();
-			}
-			return false;
-		}
-	}
+  matches(root: Element, element: Element): boolean {
+    if (root === element) return false;
+    else {
+      let parent = element.parent();
+      return Objects.notNull(parent) && this.evaluator.matches(root, parent);
+    }
+  }
 
-	toString(): string {
-		return `${this.evaluator} ~`;
-	}
+  toString(): string {
+    return `${this.evaluator} > `;
+  }
 
 }
 
-export class ImmediatePreviousSibling   extends StructuralEvaluator {
+export class PreviousSibling extends StructuralEvaluator {
 
-	constructor(evaluator: Evaluator) {
-		super();
-		this.evaluator = evaluator;
-	}
+  constructor(evaluator: Evaluator) {
+    super();
+    this.evaluator = evaluator;
+  }
 
-	matches(root: Element, element: Element): boolean {
-		if (root === element)return false;
-		else {
-			let prev = element.previousElementSibling();
-			return Objects.notNull(prev) && this.evaluator.matches(root, prev);
-		}
-	}
+  matches(root: Element, element: Element): boolean {
+    if (root === element) return false;
+    else {
+      let prev = element.previousElementSibling();
+      while (Objects.notNull(prev)) {
+        if (this.evaluator.matches(root, prev)) return true;
+        prev = prev.previousElementSibling();
+      }
+      return false;
+    }
+  }
 
-	toString(): string {
-		return `${this.evaluator} + `;
-	}
+  toString(): string {
+    return `${this.evaluator} ~`;
+  }
+
+}
+
+export class ImmediatePreviousSibling extends StructuralEvaluator {
+
+  constructor(evaluator: Evaluator) {
+    super();
+    this.evaluator = evaluator;
+  }
+
+  matches(root: Element, element: Element): boolean {
+    if (root === element) return false;
+    else {
+      let prev = element.previousElementSibling();
+      return Objects.notNull(prev) && this.evaluator.matches(root, prev);
+    }
+  }
+
+  toString(): string {
+    return `${this.evaluator} + `;
+  }
 
 }

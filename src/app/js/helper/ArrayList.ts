@@ -23,10 +23,16 @@ export class ArrayList<T> implements Iterable<T> {
   constructor(array: T[]);
 
   /** private */
-  constructor(object?: any) {
-    let arrayLength = Objects.isNumber(object) ? object : Array.isArray(object) ? object.length : undefined;
+  constructor(object?: number | T[]) {
+    let arrayLength = ArrayList.getLengthArrayInit(object);
     this.arrayList = new Array(arrayLength);
-    if(Array.isArray(object)) this.arrayList.push(...object);
+    if(Objects.isArray(object)) this.arrayList.push(...object);
+  }
+
+  private static getLengthArrayInit<T>(object: number | T[]): number {
+    if(Objects.isNumber(object)) return object;
+    else if(Array.isArray(object)) return object.length;
+    else return 0;
   }
 
   size(): number {
@@ -95,7 +101,7 @@ export class ArrayList<T> implements Iterable<T> {
    * @param index
    */
   get(index: number): T {
-    return this.arrayList[index];
+    return this.arrayList[index] || null;
   }
 
   /**

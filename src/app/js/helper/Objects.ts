@@ -1,7 +1,5 @@
-import { EqualsBuilder } from "./EqualsBuilder";
-
 export abstract class Objects {
-
+  
   private constructor() {}
 
   static isPrimitive(object: any): boolean {
@@ -22,6 +20,11 @@ export abstract class Objects {
     if (Objects.isObject(object)) return Object.keys(object).length === 0;
     else return String(object).length === 0;
   }
+
+  static isArray(object: any): object is any[] {
+    return Array.isArray(object);
+  }
+
 
   static isString(object: any): object is string {
     return typeof object === "string";
@@ -118,9 +121,9 @@ export abstract class Objects {
     else return (lhs || "").toLowerCase() === (rhs || "").toLowerCase();
   }
 
-  static objectEqual(lhs: any, rhs: any): boolean {
-    return EqualsBuilder.withClass(lhs, rhs, ["*"]).isEquals();
-  }
+  // static objectEqual(lhs: any, rhs: any): boolean {
+  //   return EqualsBuilder.withClass(lhs, rhs, ["*"]).isEquals();
+  // }
 
   /**
    * Returns space padding (up to a max of 30).

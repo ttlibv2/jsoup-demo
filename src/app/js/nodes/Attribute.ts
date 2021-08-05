@@ -2,7 +2,6 @@ import { EqualsBuilder } from "../helper/EqualsBuilder";
 import { Assert } from "../helper/Assert";
 import { Normalizer } from "../helper/Normalizer";
 import { Objects } from "../helper/Objects";
-import { OutputSetting } from "../parse/Setting";
 import { Attributes } from "./Attributes";
 
 /**
@@ -111,7 +110,7 @@ export class Attribute {
   static shouldCollapseAttribute(
     key: string,
     val: string,
-    setting: OutputSetting
+    setting: any//OutputSetting
   ): boolean {
     let iHtml = setting.syntax === "html";
     let isValKey = Objects.isEmpty(val) || Objects.equalsIgnoreCase(val, key);

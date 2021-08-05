@@ -199,7 +199,7 @@ export class Entities {
     } else {
       let codepoint = EscapeMode.extended.codepointForName(name);
       if (codepoint !== Entities.empty) {
-        codepoint[0] = codepoint;
+        codepoints[0] = codepoint;
         return 1;
       } else return 0;
     }
@@ -325,6 +325,7 @@ export class Entities {
   static unescape(string: string, strict: boolean = false) {
     return Parser.unescapeEntities(string, strict);
   }
+
 
   /**
    * Provides a fast-path for Encoder.canEncode

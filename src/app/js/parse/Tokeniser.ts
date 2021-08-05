@@ -171,7 +171,7 @@ export class Tokeniser {
 	}
 
 	createTagPending(start: boolean): Tag {
-		return start ? this.startPending.reset() : this.endPending.reset();
+		return this.tagPending = start ? this.startPending.reset() : this.endPending.reset();
 	}
 
 	emitTagPending(): void {
@@ -216,21 +216,21 @@ export class Tokeniser {
 		if (this.errors.canAddError()) {
 			let r = this.reader;
 			let errorMsg = Objects.isString(object) ? object : `Unexpected character '${r.current()}' in input state [${object}]`;
-			this.errors.push(new ParseError(r.pos(), errorMsg));
+			this.errors.add(new ParseError(r.pos(), errorMsg));
 		}
 	}
 
 	eofError(state: TokeniserState): void {
 		if (this.errors.canAddError()) {
 			let errorMsg = `Unexpectedly reached end of file (EOF) in input state [${state}]`;
-			this.errors.push(new ParseError(this.reader.pos(), errorMsg));
+			this.errors.add(new ParseError(this.reader.pos(), errorMsg));
 		}
 	}
 
 	private characterReferenceError(message: string): void {
 		if (this.errors.canAddError()) {
 			let errorMsg = `Invalid character reference: ${message}`;
-			this.errors.push(new ParseError(this.reader.pos(), errorMsg));
+			this.errors.add(new ParseError(this.reader.pos(), errorMsg));
 		}
 	}
 
