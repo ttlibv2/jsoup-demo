@@ -420,7 +420,7 @@ export class Comment extends Token {
   bogus = false;
 
   get tokenType(): TokenType {
-    throw new Error("Method not implemented.");
+    return TokenType.Comment;
   }
 
   reset(): this {

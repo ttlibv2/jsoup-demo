@@ -1,17 +1,16 @@
 import { Objects } from "../helper/Objects";
 import { Assert } from "../helper/Assert";
-// import { NodeUtils } from "../helper/NodeUtils";
 import { StringBuilder } from "../helper/StringBuilder";
- import { Parser } from "../parse/Parser";
-// import { OutputSetting } from "../parse/Setting";
-// import { NodeFilter } from "../select/NodeFilter";
-// import { NodeTraversor } from "../select/NodeTraversor";
-// import { NodeVisitor, NodeVisitorImpl } from "../select/NodeVisitor";
+import { Parser } from "../parse/Parser";
+import { OutputSetting } from "../parse/Setting";
+import { NodeFilter } from "../select/NodeFilter";
+import { NodeTraversor } from "../select/NodeTraversor";
+import { NodeVisitorImpl } from "../select/NodeVisitor";
 import { Attribute } from "./Attribute";
 import { Attributes } from "./Attributes";
 import { Document } from "./Document";
-// import { Element } from "./1005_Element";
-// import { Elements } from "../select/Elements";
+import { Element } from "./Element";
+import { Elements } from "../select/Elements";
 import { IObject } from "../helper/IObject";
 import { StringUtil } from "../helper/StringUtil";
 import { NodeList } from "./NodeList";
@@ -21,6 +20,11 @@ import { NodeList } from "./NodeList";
  * Elements, Documents, Comments etc are all Node instances.
  */
 export abstract class Node implements IObject {
+
+  static is(node: any): node is Node {
+    return node instanceof Node;
+  }
+
   private parentNode: Node;
   private siblingIndex: number;
 
@@ -161,14 +165,14 @@ export abstract class Node implements IObject {
     }
   }
 
-  set_attr(name: string, value: string | number | boolean | null) {
+  protected set_attr(name: string, value: string | number | boolean | null) {
     name = this.parser().setting().normalizeTag(name);
     if (typeof value === "boolean") this.attributes().set(name, value);
-    else this.attributes().putIgnoreCase(name, `${value || ""}`);
+    else this.attributes().putIgnoreCase(name, `${value || ''}`);
     return this;
   }
 
-  get_attr(name: string): string {
+  protected get_attr(name: string): string {
     name = Assert.notEmpty(name);
     if (!this.hasAttributes()) return "";
     else {
@@ -347,17 +351,18 @@ export abstract class Node implements IObject {
   }
 
   private addSiblingHtml(index: number, html: string) {
-    throw Error(`private addSiblingHtml(index: number, html: string)`);
-    // Assert.notNull(html);
-    // Assert.notNull(this.parentNode);
-    // let context: any = this.parentNode instanceof Element ? this.parentNode : null;
-    // let nodes = Parser.getParserForNode(this).parseFragment(
-    //   html,
-    //   context,
-    //   this.getBaseUri()
-    // );
-    // this.parentNode?.addChildren(nodes, index);
-    // return this;
+    Assert.notNull(html);
+    Assert.notNull(this.parentNode);
+    let context: any = this.parentNode instanceof Element ? this.parentNode : null;
+    let nodes = this.parser().parseFragment(html,context,this.getBaseUri());
+    this.parentNode?.addChildren(nodes, index);
+    return this;
+  }
+
+  private getElementContext(): Element {
+    if(Element.is(this.parentNode)) return this.parentNode;
+    if(Element.is(this)) return this;
+    else return null;
   }
 
   /**
@@ -365,37 +370,30 @@ export abstract class Node implements IObject {
    * @param {string} html HTML to wrap around this node
    */
   wrap(html: string): this {
-    throw Error(`wrap(html: string): this`);
-    // Assert.notEmpty(html);
-    // let context: any =
-    //   this.parentNode !== null && this.parentNode instanceof Element
-    //     ? this.parentNode
-    //     : this instanceof Element
-    //     ? this
-    //     : null;
+    Assert.notEmpty(html);
+    let context: Element = this.getElementContext();
+    let wrapChild = this.parser().parseFragment(html, context, this.getBaseUri()) || [];
+    let firstWrap:any = wrapChild[0];
+    if (Element.is(firstWrap)) {
+      let deepest = this.getDeepChild(firstWrap);
 
-    // let wrapChild = this.parser().parseFragment(html, context, this.getBaseUri());
-    // let firstWrap:any = wrapChild[0];
-    // if (firstWrap instanceof Element) {
-    //   let deepest = this.getDeepChild(firstWrap);
-    //   if (this.parentNode !== null) this.parentNode.replaceChild(this, <any>firstWrap);
+      if (Objects.notNull(this.parentNode)) {
+        this.parentNode.replaceChild(this, firstWrap);
+      }
 
-    //   // side effect of tricking wrapChildren to lose first
-    //   deepest.addChildren([this]);
+      // side effect of tricking wrapChildren to lose first
+      deepest.addChildren([this]);
 
-    //   // remainder (unbalanced wrap, like <div></div><p></p> -- The <p> is remainder
-    //   if (wrapChild.length > 0) {
-    //     for (let i = 0; i < wrapChild.length; i++) {
-    //       let remainder:any = wrapChild[i];
-    //       if (firstWrap === remainder) continue;
-    //       if (remainder.parentNode !== null)
-    //         remainder.parentNode?.removeChild(remainder);
-    //       firstWrap.after(remainder);
-    //     }
-    //   }
-    // }
+      // remainder (unbalanced wrap, like <div></div><p></p> -- The <p> is remainder
+      for(let remainder of wrapChild) {
+        if (firstWrap === remainder) continue;
+        let parent = remainder.parentNode;
+        if(Objects.notNull(parent)) parent.removeChild(remainder);
+        firstWrap.after(remainder);
+      }
+    }
 
-    // return this;
+    return this;
   }
 
   /**
@@ -412,13 +410,8 @@ export abstract class Node implements IObject {
     return firstChild;
   }
 
-  //private getDeepChild(el: Element): Element {
-   // let children: Elements = el.children();
-    //return children.size() > 0 ? this.getDeepChild(children.get(0)) : el;
-  //}
-
-  private getDeepChild(el: any): any {
-   let children = el.children();
+  private getDeepChild(el: Element): Element {
+    let children: Elements = el.children();
     return children.size() > 0 ? this.getDeepChild(children.get(0)) : el;
   }
 
@@ -455,12 +448,12 @@ export abstract class Node implements IObject {
     Assert.isTrue(nodeOut.parentNode === this);
     Assert.notNull(nodeIn);
 
-    if (nodeIn.parentNode !== null) {
+    if (Objects.notNull(nodeIn.parentNode)) {
       nodeIn.parentNode.removeChild(nodeIn);
     }
 
     let index = nodeOut.siblingIndex;
-    this.childNodes()[index] = nodeIn;
+    this.childNodes().set(index, nodeIn);
     nodeIn.parentNode = this;
     nodeIn.siblingIndex = index;
     nodeOut.parentNode = null;
@@ -504,10 +497,8 @@ export abstract class Node implements IObject {
 
       // fast path - if used as a wrap (index=0, children = child[0].parent.children - do inplace
       let firstParent = children[0].parentNode;
-      if (
-        firstParent !== null &&
-        firstParent.childNodeSize() === children.length
-      ) {
+      let isTrue = Objects.notNull(firstParent) && firstParent.childNodeSize() === children.length;
+      if (isTrue) {
         let sameList = true;
         let firstParentNodes = firstParent.childNodes();
 
@@ -531,7 +522,11 @@ export abstract class Node implements IObject {
       }
 
       Assert.allNotNull(children);
-      for (let child of children) this.reparentChild(child);
+
+      for (let child of children) {
+        this.reparentChild(child);
+      }
+
       nodes.addAll(children, index);
       this.reindexChildren(index);
     }
@@ -543,7 +538,7 @@ export abstract class Node implements IObject {
 
   protected reindexChildren(start: number) {
     let nodes = this.childNodes();
-    for (let i = 0; i < nodes.size(); i++) {
+    for (let i = start; i < nodes.size(); i++) {
       nodes[i].siblingIndex = i;
     }
   }
@@ -553,17 +548,19 @@ export abstract class Node implements IObject {
    * @return node siblings. If the node has no parent, returns an empty list.
    */
   siblingNodes(): Node[] {
-    if (this.parentNode === null) return [];
-    let nodes = this.parentNode?.childNodes();
-    return nodes.filter((node) => node !== this);
+    if (Objects.isNull(this.parentNode)) return [];
+    else {
+      let nodes = this.parentNode.childNodes();
+      return nodes.filter((node) => node !== this);
+    }
   }
 
   /**
    * Get this node's next sibling.
    * @return next sibling, or @{code null} if this is the last sibling
    */
-  nextSibling(): Node | null {
-    if (this.parentNode !== null) {
+  nextSibling(): Node {
+    if (Objects.notNull(this.parentNode)) {
       let siblings = this.parentNode.childNodes();
       let index = this.siblingIndex + 1;
       if (siblings.size() > index) return siblings[index];
@@ -576,9 +573,8 @@ export abstract class Node implements IObject {
    * @return the previous sibling, or @{code null} if this is the first sibling
    */
   previousSibling(): Node | null {
-    if (this.parentNode !== null && this.siblingIndex > 0) {
-      return this.parentNode.childNodes()[this.siblingIndex - 1];
-    } else return null;
+    if(Objects.isNull(this.parentNode) || this.siblingIndex <=0 ) return null;
+    else return this.parentNode.childNodes()[this.siblingIndex - 1];
   }
 
   /**
@@ -588,7 +584,7 @@ export abstract class Node implements IObject {
    */
   traverse(visitor: any): this {
     Assert.notNull(visitor);
-    // NodeTraversor.traverse(visitor, this);
+    NodeTraversor.traverse(visitor, this);
     return this;
   }
 
@@ -599,21 +595,18 @@ export abstract class Node implements IObject {
    */
   filter(filter: NodeFilter): this {
     Assert.notNull(filter);
-    // NodeTraversor.filter(filter, this);
+    NodeTraversor.filter(filter, this);
     return this;
   }
 
-   parser(): Parser {
+  parser(): Parser {
     return Parser.forNode(this);
-   }
-
+  }
 
   /**
-     Get the outer HTML of this node. For example, on a {@code p} element, may return {@code <p>Para</p>}.
-     @return outer HTML
-     @see Element#html()
-     @see Element#text()
-     */
+   * Get the outer HTML of this node.
+   * @return outer HTML
+   */
   outerHtml(): string {
     let accum = new StringBuilder();
     this.outerHtmlImpl(accum);
@@ -621,11 +614,10 @@ export abstract class Node implements IObject {
   }
 
   outerHtmlImpl(accum: StringBuilder): void {
-    throw Error(`outerHtmlImpl(accum: StringBuilder)`);
-    // let setting = NodeUtils.outputSettings(this);
-    // NodeTraversor.traverse(new NodeVisitorImpl()
-    // .withHead((node, depth) => node.outerHtmlHead(accum, depth, setting))
-    // .withTail((node, depth)=>node.outerHtmlTail(accum, depth, setting)), this);
+    let setting = OutputSetting.forNode(this);
+    NodeTraversor.traverse(new NodeVisitorImpl()
+      .set_headCb((node, depth) => node.outerHtmlHead(accum, depth, setting))
+      .set_tailCb((node, depth)=>node.outerHtmlTail(accum, depth, setting)), this);
   }
 
   /**
@@ -648,12 +640,14 @@ export abstract class Node implements IObject {
     let nodesToProcess: Node[] = [thisClone];
     while (nodesToProcess.length > 0) {
       let currParent = nodesToProcess.pop();
-      let length = currParent?.childNodeSize() || 0;
-      for (let i = 0; i < length; i++) {
-        let childNodes = currParent?.childNodes() || [];
-        let childClone = childNodes[i].doClone(currParent);
-        childNodes[i] = childClone;
-        nodesToProcess.push(childClone);
+      if(Objects.notNull(currParent)) {
+        let childNodes = currParent.childNodes() || [];
+        let length = currParent.childNodeSize() || 0;
+        for (let i = 0; i < length; i++) {
+          let childClone = childNodes[i].doClone(currParent);
+          childNodes[i] = childClone;
+          nodesToProcess.push(childClone);
+        }
       }
     }
 
@@ -684,7 +678,7 @@ export abstract class Node implements IObject {
   protected indent(
     accum: StringBuilder,
     depth: number,
-    setting: any ) {//OutputSetting
+    setting: OutputSetting ) {
     accum.append("\n").append(Objects.padding(depth * setting.indentAmount));
   }
 
@@ -698,11 +692,7 @@ export abstract class Node implements IObject {
    * @param depth
    * @param setting
    */
-  abstract outerHtmlHead(
-    accum: StringBuilder,
-    depth: number,
-    setting: any//OutputSetting
-  ): void;
+  abstract outerHtmlHead(accum: StringBuilder,depth: number,setting: OutputSetting): void;
 
   /**
    * outerHtmlTail
@@ -710,9 +700,5 @@ export abstract class Node implements IObject {
    * @param depth
    * @param setting
    */
-  abstract outerHtmlTail(
-    accum: StringBuilder,
-    depth: number,
-    setting: any//OutputSetting
-  ): void;
+  abstract outerHtmlTail(accum: StringBuilder,depth: number,setting: OutputSetting ): void;
 }

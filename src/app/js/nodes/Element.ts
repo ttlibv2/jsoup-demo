@@ -3,25 +3,25 @@ import { Tag } from "../parse/Tag";
 import { Attributes } from "./Attributes";
 import { Elements } from "../select/Elements";
 import { Node } from "./1004_Node";
-// import { TextNode } from "./TextNode";
-// import { DataNode } from "./DataNode";
-// import { Selector } from "../select/Selector";
-// import { Collector } from "../select/Collector";
-// import { QueryParser } from "../select/QueryParser";
+import { TextNode } from "./TextNode";
+import { DataNode } from "./DataNode";
+import { Selector } from "../select/Selector";
+import { Collector } from "../select/Collector";
+import { QueryParser } from "../select/QueryParser";
 import { StringBuilder } from "../helper/StringBuilder";
 import { OutputSetting } from "../parse/Setting";
 import { Assert } from "../helper/Assert";
 import { NodeList } from "./NodeList";
 import { Objects } from "../helper/Objects";
-// import { Normalizer } from "../helper/Normalizer";
+import { Normalizer } from "../helper/Normalizer";
 import { StringUtil } from "../helper/StringUtil";
-// import { CDataNode } from "./CDataNode";
-// import { NodeTraversor } from "../select/NodeTraversor";
-// import { NodeVisitorImpl } from "../select/NodeVisitor";
+import { CDataNode } from "./CDataNode";
+import { NodeTraversor } from "../select/NodeTraversor";
+import { NodeVisitorImpl } from "../select/NodeVisitor";
 import { Evaluator } from "../select/Evaluator";
-import { TextNode } from "./TextNode";
-// import * as EvaluatorNS from "../select/Evaluator";
-// import { Document } from "./Document";
+import * as EvaluatorNS from "../select/Evaluator";
+import { Document } from "./Document";
+const {isString, notNull, notEmpty, isNull, equalsIgnoreCase} = Objects;
 
 class WeakReference<T> {
   constructor(private value?: T) {}
@@ -29,15 +29,6 @@ class WeakReference<T> {
     return this.value;
   }
 }
-
-// type Evaluator = {[key: string]: any};
-
-// declare let Selector: any; 
-// declare let Collector: any;
-// declare let QueryParser: any;
-// declare let NodeTraversor: any;
-// declare let NodeVisitorImpl: any;
-// declare let EvaluatorNS: any;
 
 /**
  * A HTML element consists of a tag name, attributes,
@@ -47,6 +38,7 @@ class WeakReference<T> {
  * and manipulate the HTML.
  */
 export class Element extends Node {
+
   static is(node: any): node is Element {
     return node instanceof Element;
   }
@@ -66,7 +58,7 @@ export class Element extends Node {
   private shadowChildrenRef: WeakReference<Element[]>;
 
   // setting output html
-  //outputSetting: OutputSetting = new OutputSetting();
+  //outputSetting: OutputSetting = OutputSetting.instance;
 
   /**
    * Create a new, standalone element.
@@ -110,7 +102,7 @@ export class Element extends Node {
     this.attrs = attributes || new Attributes();
 
     // set base uri if not null
-    if (Objects.notNull(baseUri)) {
+    if (notNull(baseUri)) {
       this.setBaseUri(baseUri);
     }
   }
@@ -120,7 +112,7 @@ export class Element extends Node {
    * @return {boolean}
    */
   protected hasChildNodes(): boolean {
-    return Objects.notEmpty(this.childNodes());
+    return notEmpty(this.childNodes());
   }
 
   childNodes(): NodeList {
@@ -132,7 +124,7 @@ export class Element extends Node {
    * @return {boolean}
    */
   hasAttributes(): boolean {
-    return Objects.notEmpty(this.attributes());
+    return notEmpty(this.attributes());
   }
 
   attributes(): Attributes {
@@ -205,9 +197,9 @@ export class Element extends Node {
    */
   private static searchUpForAttribute(start: Element, name: string): string {
     let el = start;
-    while (Objects.notNull(el)) {
+    while (notNull(el)) {
       let attrs = el.attributes();
-      let hasKey = Objects.notEmpty(attrs) && attrs.hasAttr(name);
+      let hasKey = notEmpty(attrs) && attrs.hasAttr(name);
       if (hasKey) return attrs.get(name).getValue();
       else el = el.parent();
     }
@@ -273,7 +265,7 @@ export class Element extends Node {
 
   static accumulateParents(el: Element, parents: Elements) {
     let parent = el.parent();
-    if (Objects.notNull(parent) && parent.tagName() !== "#root") {
+    if (notNull(parent) && parent.tagName() !== "#root") {
       parents.add(parent);
       this.accumulateParents(parent, parents);
     }
@@ -330,14 +322,12 @@ export class Element extends Node {
     if (this.childNodeSize() === 0) return [];
     else {
       let children: Element[] = this.shadowChildrenRef?.get() || null;
-      let isRefNoNull = Objects.notNull(this.shadowChildrenRef);
-      if (isRefNoNull && children !== null) return children;
+      let isRefNoNull = notNull(this.shadowChildrenRef);
+      if (isRefNoNull && isNull(children)) return children;
       else {
-        children = <any>(
-          this.childNodes().filter((el) => Element.is(el))
-        );
-        this.shadowChildrenRef = new WeakReference(children);
-        return children;
+        let filterNode:any[] = this.childNodes().filter((el) => Element.is(el));
+        this.shadowChildrenRef = new WeakReference(filterNode);
+        return children = filterNode;
       }
     }
   }
@@ -366,9 +356,9 @@ export class Element extends Node {
    *     <li>{@code p.textNodes()} = {@code List<TextNode>["One ", " Three ", " Four"]}</li>
    * </ul>
    */
-  // textNodes(): TextNode[] {
-  //   return <any[]>this.childNodes().filter((node) => node instanceof TextNode);
-  // }
+  textNodes(): TextNode[] {
+    return <any[]>this.childNodes().filter((node) => TextNode.is(node));
+  }
 
   /**
    * Get this element's child data nodes. The list is unmodifiable but the data nodes may be manipulated.
@@ -379,9 +369,9 @@ export class Element extends Node {
    * empty list.
    * @see #data()
    */
-  // dataNodes(): DataNode[] {
-  //   return <any[]>this.childNodes().filter((node) => node instanceof DataNode);
-  // }
+  dataNodes(): DataNode[] {
+    return <any[]>this.childNodes().filter((node) => DataNode.is(node));
+  }
 
   /**
    * Find elements that match the {@link Selector} CSS query, with this element as the starting context. Matched elements
@@ -415,8 +405,7 @@ export class Element extends Node {
    * @param {string | Evaluator} object
    */
   select(object: string | Evaluator): Elements {
-    throw Error(`not impl`);
-    //return Selector.select(<any>object, this);
+    return Selector.select(<any>object, this);
   }
 
   /**
@@ -439,10 +428,8 @@ export class Element extends Node {
    * @return {Element}
    */
   selectFirst(object: string | Evaluator): Element {
-    throw Error(`not impl`);
-    // let isCssQuery: boolean = typeof object === "string";
-    // if (isCssQuery) return Selector.selectFirst(<string>object, this);
-    // else return Collector.findFirst(<any>object, this);
+    if (isString(object)) return Selector.selectFirst(object, this);
+    else return Collector.findFirst(object, this);
   }
 
   /**
@@ -464,10 +451,9 @@ export class Element extends Node {
    * @param {string | Evaluator} object
    * @return {Element}
    */
-  is(object: string | Evaluator): boolean {throw Error(`not impl`);
-    // let evaluator: Evaluator =
-    //   typeof object === "string" ? QueryParser.parse(<any>object) : object;
-    // return evaluator.matches(this.root(), this);
+  is(object: string | Evaluator): boolean {
+    let evaluator: Evaluator = isString(object) ? QueryParser.parse(object) : object;
+    return evaluator.matches(this.root(), this);
   }
 
   /**
@@ -499,21 +485,19 @@ export class Element extends Node {
    * @param {string | Evaluator} object
    * @return {Element}
    */
-  closest(object: string | Evaluator): Element {throw Error(`not impl`);
-    // let evaluator = Assert.notNull(
-    //   typeof object === "string" ? QueryParser.parse(object) : object
-    // );
+  closest(object: string | Evaluator): Element {
+    let evaluator = isString(object) ? QueryParser.parse(object) : object;
 
-    // let el: Element = this;
-    // let root = this.root();
-    // do {
-    //   let isMatch = evaluator.matches(root, el);
-    //   if (isMatch) return el;
-    //   else el = el.parent();
-    // } while (el != null);
+    let el: Element = this;
+    let root = this.root();
+    do {
+      let isMatch = evaluator.matches(root, el);
+      if (isMatch) return el;
+      else el = el.parent();
+    } while (el != null);
 
-    // //
-    // return null;
+    //
+    return null;
   }
 
   /**
@@ -524,7 +508,6 @@ export class Element extends Node {
   appendChild(child: Node): this {
     Assert.notNull(child);
     this.reparentChild(child);
-    this.childNodes();
     this.childNodes().add(child);
     child.setSiblingIndex(this.childNodeSize()- 1);
     return this;
@@ -582,17 +565,14 @@ export class Element extends Node {
    * @return this element, for chaining.
    */
   insertChildren(children: Iterable<Node>, index: number) {
-    Assert.notNull(
-      children,
-      "Children collection to be inserted must not be null."
-    );
+
+    let errMsg = `Children collection to be inserted must not be null.`;
+    Assert.notNull(children,errMsg);
+
     let currentSize = this.childNodeSize();
 
     if (index < 0) index += currentSize + 1; // roll around
-    Assert.isTrue(
-      index >= 0 && index <= currentSize,
-      "Insert position out of bounds."
-    );
+    Assert.isTrue(index >= 0 && index <= currentSize,"Insert position out of bounds.");
 
     this.addChildren(children, index);
     return this;
@@ -634,11 +614,11 @@ export class Element extends Node {
    * @param text the unencoded text to add
    * @return this element
    */
-  appendText(text: string): this {throw Error(`not impl`);
-    // Assert.notNull(text);
-    // let node = new TextNode(text);
-    // this.appendChild(node);
-    // return this;
+  appendText(text: string): this {
+    Assert.notNull(text);
+    let node = new TextNode(text);
+    this.appendChild(node);
+    return this;
   }
 
   /**
@@ -647,11 +627,11 @@ export class Element extends Node {
    * @param text the unencoded text to add
    * @return this element
    */
-  prependText(text: string): this {throw Error(`not impl`);
-    // Assert.notNull(text);
-    // let node = new TextNode(text);
-    // this.prependChild(node);
-    // return this;
+  prependText(text: string): this {
+    Assert.notNull(text);
+    let node = new TextNode(text);
+    this.prependChild(node);
+    return this;
   }
 
   /**
@@ -704,7 +684,7 @@ export class Element extends Node {
     if (this.id().length > 0) {
       let idSel = `#${this.id()}`;
       let doc = this.getOwnerDocument();
-      if (Objects.isNull(doc)) return idSel;
+      if (isNull(doc)) return idSel;
       else {
         let els = doc.select(idSel);
         if (els.size() === 1 && els.get(0) === this) return idSel;
@@ -723,7 +703,7 @@ export class Element extends Node {
 
     // parent null or is document
     let parent = this.parent();
-    if (Objects.isNull(parent) || parent instanceof Document) {
+    if (isNull(parent) || parent instanceof Document) {
       return selector;
     }
 
@@ -742,7 +722,7 @@ export class Element extends Node {
    * @return sibling elements
    */
   siblingElements(): Elements {
-    if (Objects.isNull(this.parent())) return new Elements();
+    if (isNull(this.parent())) return new Elements();
     else {
       let elements = this.parent()
         .childElementsList()
@@ -761,7 +741,7 @@ export class Element extends Node {
    * @see #previousElementSibling()
    */
   nextElementSibling(): Element {
-    if (Objects.isNull(this.parent())) return null;
+    if (isNull(this.parent())) return null;
     else {
       let siblings = this.parent().childElementsList();
       let index = this.indexInList(this, siblings);
@@ -783,7 +763,7 @@ export class Element extends Node {
    * @see #nextElementSibling()
    */
   previousElementSibling(): Element {
-    if (Objects.isNull(this.parent())) return null;
+    if (isNull(this.parent())) return null;
     else {
       let siblings = this.parent().childElementsList();
       let index = this.indexInList(this, siblings);
@@ -802,7 +782,7 @@ export class Element extends Node {
 
   private nextElementSiblingsImpl(next: boolean) {
     let els = new Elements();
-    if (Objects.isNull(this.parent())) return els;
+    if (isNull(this.parent())) return els;
     else {
       els.add(this);
       return next ? els.nextAll() : els.prevAll();
@@ -815,7 +795,7 @@ export class Element extends Node {
    */
   firstElementSibling(): Element {
     let parent = this.parent();
-    if (Objects.isNull(parent)) return this;
+    if (isNull(parent)) return this;
     else {
       let siblings = parent.childElementsList();
       return siblings.length > 1 ? siblings[0] : this;
@@ -829,7 +809,7 @@ export class Element extends Node {
    */
   elementSiblingIndex(): number {
     let parent = this.parent();
-    if (Objects.isNull(parent)) return 0;
+    if (isNull(parent)) return 0;
     return this.indexInList(this, parent.childElementsList());
   }
 
@@ -839,7 +819,7 @@ export class Element extends Node {
    */
   lastElementSibling(): Element {
     let parent = this.parent();
-    if (Objects.isNull(parent)) return this;
+    if (isNull(parent)) return this;
     else {
       let siblings = parent.childElementsList();
       return siblings.length > 1 ? siblings[siblings.length - 1] : this;
@@ -859,10 +839,10 @@ export class Element extends Node {
    * @param tagName The tag name to search for (case insensitively).
    * @return a matching unmodifiable list of elements. Will be empty if this element and none of its children match.
    */
-  getElementsByTag(tagName: string): Elements {throw Error(`not impl`);
-    // Assert.notEmpty(tagName);
-    // tagName = Normalizer.normalize(tagName);
-    // return Collector.collect(new EvaluatorNS.Tag(tagName), this);
+  getElementsByTag(tagName: string): Elements {
+    Assert.notEmpty(tagName);
+    tagName = Normalizer.normalize(tagName);
+    return Collector.collect(new EvaluatorNS.Tag(tagName), this);
   }
 
   /**
@@ -874,10 +854,10 @@ export class Element extends Node {
    * @param id The ID to search for.
    * @return The first matching element by ID, starting with this element, or null if none found.
    */
-  getElementById(id: string): Element {throw Error(`not impl`);
-    // Assert.notEmpty(id);
-    // let elements = Collector.collect(new EvaluatorNS.Id(id), this);
-    // return elements?.get(0) || null;
+  getElementById(id: string): Element {
+    Assert.notEmpty(id);
+    let elements = Collector.collect(new EvaluatorNS.Id(id), this);
+    return elements?.get(0) || null;
   }
 
   /**
@@ -891,9 +871,9 @@ export class Element extends Node {
    * @see #hasClass(String)
    * @see #classNames()
    */
-  getElementsByClass(className: string): Elements {throw Error(`not impl`);
-    // Assert.notEmpty(className);
-    // return Collector.collect(new EvaluatorNS.Class(className), this);
+  getElementsByClass(className: string): Elements {
+    Assert.notEmpty(className);
+    return Collector.collect(new EvaluatorNS.Class(className), this);
   }
 
   /**
@@ -902,9 +882,10 @@ export class Element extends Node {
    * @param key name of the attribute, e.g. {@code href}
    * @return elements that have this attribute, empty if none
    */
-  getElementsByAttribute(key: string): Elements {throw Error(`not impl`);
-    // key = Assert.notEmpty(key).trim();
-    // return Collector.collect(new EvaluatorNS.Attribute(key), this);
+  getElementsByAttribute(key: string): Elements {
+    key = Assert.notEmpty(key).trim();
+    let evalu = new EvaluatorNS.Attribute(key);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -913,12 +894,10 @@ export class Element extends Node {
    * @param keyPrefix name prefix of the attribute e.g. {@code data-}
    * @return elements that have attribute names that start with with the prefix, empty if none.
    */
-  getElementsByAttributeStarting(keyPrefix: string): Elements {throw Error(`not impl`);
-    // keyPrefix = Assert.notEmpty(keyPrefix).trim();
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeStarting(keyPrefix),
-    //   this
-    // );
+  getElementsByAttributeStarting(keyPrefix: string): Elements {
+    keyPrefix = Assert.notEmpty(keyPrefix).trim();
+    let evalu = new EvaluatorNS.AttributeStarting(keyPrefix);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -928,11 +907,9 @@ export class Element extends Node {
    * @param value value of the attribute
    * @return elements that have this attribute with this value, empty if none
    */
-  getElementsByAttributeValue(key: string, value: string): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeWithValue(key, value),
-    //   this
-    // );
+  getElementsByAttributeValue(key: string, value: string): Elements {
+    let evalu = new EvaluatorNS.AttributeWithValue(key, value);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -942,11 +919,9 @@ export class Element extends Node {
    * @param value value of the attribute
    * @return elements that do not have a matching attribute
    */
-  getElementsByAttributeValueNot(key: string, value: string): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeWithValueNot(key, value),
-    //   this
-    // );
+  getElementsByAttributeValueNot(key: string, value: string): Elements {
+    let evalu = new EvaluatorNS.AttributeWithValueNot(key, value);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -956,11 +931,9 @@ export class Element extends Node {
    * @param valuePrefix start of attribute value
    * @return elements that have attributes that start with the value prefix
    */
-  getElementsByAttributeValueStarting(key: string, value: string): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeWithValueStarting(key, value),
-    //   this
-    // );
+  getElementsByAttributeValueStarting(key: string, value: string): Elements {
+    let evalu = new EvaluatorNS.AttributeWithValueStarting(key, value);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -970,14 +943,9 @@ export class Element extends Node {
    * @param valueSuffix end of the attribute value
    * @return elements that have attributes that end with the value suffix
    */
-  getElementsByAttributeValueEnding(
-    key: string,
-    valueSuffix: string
-  ): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeWithValueEnding(key, valueSuffix),
-    //   this
-    // );
+  getElementsByAttributeValueEnding( key: string,valueSuffix: string): Elements {
+    let evalu = new EvaluatorNS.AttributeWithValueEnding(key, valueSuffix);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -1144,7 +1112,7 @@ export class Element extends Node {
       if (len === 0 && len < wantLen) return false;
 
       // if both lengths are equal, only need compare the className with the attribute
-      if (len === wantLen) Objects.equalsIgnoreCase(className, classAttr);
+      if (len === wantLen) equalsIgnoreCase(className, classAttr);
 
       // otherwise, scan for whitespace and compare regions (with no string or arraylist allocations)
       let inClass: boolean = false,
@@ -1158,7 +1126,7 @@ export class Element extends Node {
           // white space ends a class name, compare it with the requested one, ignore case
           if (i - start === wantLen) {
             let name = className.substr(start, wantLen);
-            if (Objects.equalsIgnoreCase(classAttr, name)) return true;
+            if (equalsIgnoreCase(classAttr, name)) return true;
           }
           inClass = false;
         }
@@ -1167,7 +1135,7 @@ export class Element extends Node {
       // check the last entry
       if (inClass && len - start === wantLen) {
         let name = className.substr(start, wantLen);
-        return Objects.equalsIgnoreCase(classAttr, name);
+        return equalsIgnoreCase(classAttr, name);
       }
 
       return false;
@@ -1307,7 +1275,7 @@ export class Element extends Node {
     //   let owner = this.getOwnerDocument();
     //   let isContentForTagData: boolean =
     //     owner?.parser().isContentForTagData(this.normalName()) || false;
-    //   if (Objects.notNull(owner) && isContentForTagData)
+    //   if (notNull(owner) && isContentForTagData)
     //     this.appendChild(new DataNode(text));
     //   else this.appendChild(new TextNode(text));
     //   return this;
@@ -1483,7 +1451,7 @@ export class Element extends Node {
       tag.isInline &&
       !tag.isEmpty() &&
       (!this.hasParent() || this.parent().isBlock()) &&
-      Objects.notNull(this.previousSibling()) &&
+      notNull(this.previousSibling()) &&
       !setting.outline
     );
   }

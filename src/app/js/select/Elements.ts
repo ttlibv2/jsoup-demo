@@ -17,6 +17,10 @@ import { NodeList } from "../nodes/NodeList";
 
 export class Elements extends ArrayList<Element> {
 
+  static is(object: any): object is Elements {
+    return object instanceof Elements;
+  }
+
   get(index: number): Element {
     if (index < 0 || index >= this.size())
       throw new Error(`@index invalid in [0, ${this.size()}]`);

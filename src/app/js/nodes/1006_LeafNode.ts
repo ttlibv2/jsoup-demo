@@ -44,16 +44,15 @@ export abstract class LeafNode extends Node {
 	}
 
 	/** @override */
-	get_attr(name: string): string {
-		return this.hasAttributes()
-			? super.get_attr(name)
-			: Assert.notEmpty(name) === this.getNodeName()
-			? this.value
-			: '';
+	protected get_attr(name: string): string {
+		Assert.notEmpty(name);
+		if(this.hasAttributes()) return super.get_attr(name);
+		if(name === this.getNodeName()) return this.value;
+		else return '';
 	}
 
 	/** @override */
-	set_attr(name: string, value: string): this {
+	protected set_attr(name: string, value: string): this {
 		if (!this.hasAttributes() && name === this.getNodeName()) {
 			this.value = value;
 		} else {
