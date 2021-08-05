@@ -1,0 +1,7 @@
+{
+  "/web/**": {
+    "target": "https://web.ts24.com.vn",
+    "secure": false,
+    "logLevel": "debug"
+  }
+}
