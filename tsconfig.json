@@ -12,11 +12,11 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "emitDecoratorMetadata": false,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es5",
-    "module": "commonjs",
+    "target": "es2016",
+    "module": "es2020",
     "lib": [
       "es2020",
       "dom"
