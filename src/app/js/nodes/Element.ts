@@ -1425,6 +1425,7 @@ export class Element extends Node {
       let end = setting.syntax === "html" && this.tagNode.isEmpty();
       accum.append(`${end ? ">" : " />"}`);
     }
+	else accum.append(`>`);
   }
 
   outerHtmlTail( accum: StringBuilder, depth: number, setting: OutputSetting ): void {

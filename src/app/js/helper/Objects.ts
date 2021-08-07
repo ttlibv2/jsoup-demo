@@ -20,7 +20,7 @@ export abstract class Objects {
   static isEmpty(object: any): boolean {
     if (Objects.isNull(object)) return true;
     if (Array.isArray(object)) return object.length === 0;
-    if (Objects.isString(object)) return object.trim().length === 0;
+    if (Objects.isString(object)) return object.length === 0;
     if (Objects.isObject(object)) return Object.keys(object).length === 0;
     else return String(object).length === 0;
   }

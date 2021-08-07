@@ -184,7 +184,7 @@ export abstract class Tag extends Token {
   private pendingAttributeValueS: string; // try to get attr vals in one shot, vs Builder
   private hasEmptyAttributeValue: boolean = false; // distinguish boolean attribute from empty string value
   private hasPendingAttributeValue: boolean = false;
-  selfClosing = false;
+  protected selfClosing = false;
 
   // start tags get attributes on construction.
   // End tags get attributes on first new attribute
@@ -279,6 +279,11 @@ export abstract class Tag extends Token {
     this.tagName = name;
     this.normalName_ = Normalizer.lowerCase(name);
     return this;
+  }
+  
+  setSelfClosing(): this {
+	  this.selfClosing = true;
+	  return this;
   }
 
   isSelfClosing(): boolean {

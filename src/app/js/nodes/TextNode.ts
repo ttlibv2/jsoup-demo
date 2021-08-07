@@ -116,9 +116,9 @@ export class TextNode extends LeafNode {
     let siblingIndex = this.getSiblingIndex();
 
     // if pretty === true
-    let isIf0 = () => siblingIndex === 0 &&  NodeUtils.isElement(parent) &&  parent.tag().formatAsBlock && !this.isBlank;
-    let isIf1 = () => setting.outline && this.siblingNodes().length > 0 && !this.isBlank();
-    if (pretty && isIf0() && isIf1()) this.indent(accum, depth, setting);
+    let isIf0 = siblingIndex === 0 &&  NodeUtils.isElement(parent) &&  parent.tag().formatAsBlock && !this.isBlank();
+    let isIf1 = setting.outline && this.siblingNodes().length > 0 && !this.isBlank();
+    if (pretty && ( isIf0 || isIf1 ) ) this.indent(accum, depth, setting);
 
     //
     let normaliseWhite = pretty && !Element.preserveWhitespace(parent);

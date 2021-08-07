@@ -29,6 +29,7 @@ export abstract class TokeniserState  {
 			let needsExitTransition = !(t.isAppropriateEndTagToken() && !r.isEmpty());
 			if (!needsExitTransition) {
 				let c = r.consume();
+let str = c.string;
 				switch (c.string) {
 					case '\t':
 					case '\n':
@@ -106,6 +107,7 @@ export abstract class TokeniserState  {
 
 		//
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -289,7 +291,8 @@ class TagName extends TokeniserState {
 		t.tagPending.appendTagName(tagName);
 
 		let c: Char = r.consume();
-		switch (c.string) {
+		let str = c.string;
+		switch (str) {
 			case '\t':
 			case '\n':
 			case '\r':
@@ -369,6 +372,7 @@ class RCDATAEndTagName extends TokeniserState {
 		}
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -523,6 +527,7 @@ class ScriptDataEscapedDash extends TokeniserState {
 		}
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.emit(c);
@@ -552,6 +557,7 @@ class ScriptDataEscapedDashDash extends TokeniserState {
 		}
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.emit(c);
@@ -657,6 +663,7 @@ class ScriptDataDoubleEscapedDash extends TokeniserState {
 	static instance = new ScriptDataDoubleEscapedDash();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.emit(c);
@@ -686,6 +693,7 @@ class ScriptDataDoubleEscapedDashDash extends TokeniserState {
 	static instance = new ScriptDataDoubleEscapedDashDash();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.emit(c);
@@ -737,6 +745,7 @@ class BeforeAttributeName extends TokeniserState {
 	static instance = new BeforeAttributeName();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -789,6 +798,7 @@ class AttributeName extends TokeniserState {
 		t.tagPending.appendAttributeName(name);
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -827,6 +837,7 @@ class AfterAttributeName extends TokeniserState {
 	static instance = new AfterAttributeName();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -875,6 +886,7 @@ class BeforeAttributeValue extends TokeniserState {
 	static instance = new BeforeAttributeValue();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -930,6 +942,7 @@ class AttributeValue_doubleQuoted extends TokeniserState {
 		else t.tagPending.setEmptyAttributeValue();
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '"':
 				t.transition(AfterAttributeValue_quoted.instance);
@@ -962,6 +975,7 @@ class AttributeValue_singleQuoted extends TokeniserState {
 		else t.tagPending.setEmptyAttributeValue();
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case "'":
 				t.transition(AfterAttributeValue_quoted.instance);
@@ -992,6 +1006,7 @@ class AttributeValue_unquoted extends TokeniserState {
 		if (value.length > 0) t.tagPending.appendAttributeValue(value);
 
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1036,6 +1051,7 @@ class AfterAttributeValue_quoted extends TokeniserState {
 	static instance = new AfterAttributeValue_quoted();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1067,9 +1083,10 @@ class SelfClosingStartTag extends TokeniserState {
 	static instance = new SelfClosingStartTag();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '>':
-				t.tagPending.selfClosing = true;
+				t.tagPending.setSelfClosing();
 				t.emitTagPending();
 				t.transition(Data.instance);
 				break;
@@ -1126,6 +1143,7 @@ class CommentStart extends TokeniserState {
 	static instance = new CommentStart();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.transition(CommentStartDash.instance);
@@ -1156,6 +1174,7 @@ class CommentStartDash extends TokeniserState {
 	static instance = new CommentStartDash();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.transition(CommentStartDash.instance);
@@ -1209,6 +1228,7 @@ class CommentEndDash extends TokeniserState {
 	static instance = new CommentEndDash();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.transition(CommentEnd.instance);
@@ -1234,6 +1254,7 @@ class CommentEnd extends TokeniserState {
 	static instance = new CommentEnd();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '>':
 				t.emitCommentPending();
@@ -1269,6 +1290,7 @@ class CommentEndBang extends TokeniserState {
 	static instance = new CommentEndBang();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '-':
 				t.commentPending.append('--!');
@@ -1299,6 +1321,7 @@ class Doctype extends TokeniserState {
 	static instance = new Doctype();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1332,6 +1355,7 @@ class BeforeDoctypeName extends TokeniserState {
 			return;
 		}
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1369,6 +1393,7 @@ class DoctypeName extends TokeniserState {
 			return;
 		}
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '>':
 				t.emitDoctypePending();
@@ -1430,6 +1455,7 @@ class AfterDoctypePublicKeyword extends TokeniserState {
 	static instance = new AfterDoctypePublicKeyword();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1471,6 +1497,7 @@ class BeforeDoctypePublicIdentifier extends TokeniserState {
 	static instance = new BeforeDoctypePublicIdentifier();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1510,6 +1537,7 @@ class DoctypePublicIdentifier_doubleQuoted extends TokeniserState {
 	static instance = new DoctypePublicIdentifier_doubleQuoted();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '"':
 				t.transition(AfterDoctypePublicIdentifier.instance);
@@ -1540,6 +1568,7 @@ class DoctypePublicIdentifier_singleQuoted extends TokeniserState {
 	static instance = new DoctypePublicIdentifier_singleQuoted();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case "'":
 				t.transition(AfterDoctypePublicIdentifier.instance);
@@ -1570,6 +1599,7 @@ class AfterDoctypePublicIdentifier extends TokeniserState {
 	static instance = new AfterDoctypePublicIdentifier();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1609,6 +1639,7 @@ class BetweenDoctypePublicAndSystemIdentifiers extends TokeniserState {
 	static instance = new BetweenDoctypePublicAndSystemIdentifiers();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1648,6 +1679,7 @@ class AfterDoctypeSystemKeyword extends TokeniserState {
 	static instance = new AfterDoctypeSystemKeyword();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1690,6 +1722,7 @@ class BeforeDoctypeSystemIdentifier extends TokeniserState {
 	static instance = new BeforeDoctypeSystemIdentifier();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1729,6 +1762,7 @@ class DoctypeSystemIdentifier_doubleQuoted extends TokeniserState {
 	static instance = new DoctypeSystemIdentifier_doubleQuoted();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '"':
 				t.transition(AfterDoctypeSystemIdentifier.instance);
@@ -1759,6 +1793,7 @@ class DoctypeSystemIdentifier_singleQuoted extends TokeniserState {
 	static instance = new DoctypeSystemIdentifier_singleQuoted();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case "'":
 				t.transition(AfterDoctypeSystemIdentifier.instance);
@@ -1789,6 +1824,7 @@ class AfterDoctypeSystemIdentifier extends TokeniserState {
 	static instance = new AfterDoctypeSystemIdentifier();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+	let str = c.string;
 		switch (c.string) {
 			case '\t':
 			case '\n':
@@ -1818,6 +1854,7 @@ class BogusDoctype extends TokeniserState {
 	static instance = new BogusDoctype();
 	read(t: Tokeniser, r: CharacterReader): void {
 		let c = r.consume();
+let str = c.string;
 		switch (c.string) {
 			case '>':
 				t.emitDoctypePending();
