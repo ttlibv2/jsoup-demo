@@ -1,43 +1,96 @@
 import { Char } from '../helper/Char';
+import { Reader } from '../helper/Reader';
+import { StringReader } from '../helper/StringReader';
 import { Objects } from '../helper/Objects';
+import { Assert } from '../helper/Assert';
 
 export class CharacterReader {
-	static readonly EOF: Char = Char.of(-1);
-	static readonly maxStringCacheLen = 12;
-	static readonly maxBufferLen = 1024 * 32;
-	static readonly minReadAheadLen = 1024;
-	static readonly stringCacheSize: number = 512;
-	static readonly readAheadLimit = CharacterReader.maxBufferLen * 0.75;
-	private stringCache: string[] = Array(CharacterReader.stringCacheSize);
+  static readonly EOF = Char.of(-1);
+  static readonly maxStringCacheLen: number = 12;
+  static readonly maxBufferLen: number = 1024 * 5; // visible for testing
+  static readonly readAheadLimit: number = CharacterReader.maxBufferLen * 0.75;// visible for testing
+  static readonly minReadAheadLen: number = 1024; // the minimum mark length supported. No HTML entities can be larger than this.
+  static readonly stringCacheSize: number = 512;
 
-	private charBuf: Char[];
-	private reader: string;
-	private bufLength: number;
-	private bufPos: number = 0;
-	private readerPos: number = 0;
-	private bufMark: number = -1;
+  private charBuf: Char[];
+  private reader: Reader;
+  private bufLength: number;
+  private bufSplitPoint: number;
+  private bufPos: number;
+  private readerPos: number;
+  private bufMark: number = -1;
+  private stringCache: string[] = Array(CharacterReader.stringCacheSize); // holds reused strings in this doc, to lessen garbage
 
-	/**
-	 * constructor
-	 * @param input
-	 * @param length
-	 */
-	constructor(input: string) {
-		this.reader = input;
-		this.charBuf = input.split('').map((str) => Char.of(str));
-		this.bufLength = this.charBuf.length;
-		//this.bufSplitPoint = Math.min(this.bufLength, CharacterReader.readAheadLimit);
-	}
+  constructor(input: Reader, sz: number);
+  constructor(input: Reader);
+  constructor(input: string);
+  constructor(object: Reader | string, sz?: number) {
+    
+    let applyReader = (reader: Reader, sz: number) => {
+      Assert.notNull(reader);
+      Assert.isTrue(reader.markSupported());
+      this.reader = reader;
+      this.charBuf = Array(Math.min(sz, CharacterReader.maxBufferLen));
+      this.bufferUp();
+    };
 
-	private bufferUp(): void {}
+    if(object instanceof Reader) {
+      applyReader(object, sz||CharacterReader.maxBufferLen);
+    }
 
-	close() {
-		if (this.reader !== null) {
-			this.reader = null;
-			this.charBuf = null;
-			this.stringCache = null;
-		}
-	}
+    else {
+      let reader = new StringReader(object);
+      applyReader(reader, object.length);
+    }
+  }
+
+  close(): void {
+    if(Objects.notNull(this.reader)) {
+      this.reader.close();
+      this.reader = null;
+      this.charBuf = null;
+      this.stringCache = null;
+    }
+  }
+
+  // if the underlying stream has been completely read, 
+  // no value in further buffering
+  private readFully: boolean = false;
+  private bufferUp(): void {
+    if(!!this.readFully || this.bufPos < this.bufSplitPoint) return;
+
+    let isBufMark: boolean = this.bufMark !== -1;
+    let pos: number = isBufMark ? this.bufMark : this.bufPos;
+    let offset: number = isBufMark ? this.bufPos - this.bufMark : 0;
+    let read: number = 0;
+
+    try {
+      let skipped = this.reader.skip(pos);
+      this.reader.mark(CharacterReader.maxBufferLen);
+      while(read <= CharacterReader.minReadAheadLen) {
+        let thisRead = this.reader.read(this.charBuf, read, this.charBuf.length - read);
+        if(thisRead === -1) this.readFully = true;
+        if(thisRead <=0) break;
+        else read+= thisRead;
+      }
+
+      this.reader.reset();
+      if(read > 0) {
+        // Previously asserted that there is room in buf to skip, so this will be a WTF
+        Assert.isTrue(skipped === pos);
+
+        this.bufLength = read;
+        this.readerPos += pos;
+        this.bufPos = offset;
+        if(this.bufMark!==-1) this.bufMark = 0;
+        this.bufSplitPoint = Math.min(this.bufLength, CharacterReader.readAheadLimit);
+
+      }
+    } catch (error) {
+      throw Error(`UncheckedIOException`);
+    }
+
+  }
 
 	/**
 	 * Gets the current cursor position in the content.
@@ -54,16 +107,16 @@ export class CharacterReader {
 	isEmpty(): boolean {
 		this.bufferUp();
 		return this.bufPos >= this.bufLength;
-	}
-
-	private isEmptyNoBufferUp(): boolean {
+  }
+  
+  private isEmptyNoBufferUp(): boolean {
 		return this.bufPos >= this.bufLength;
 	}
 
 	private getAtPos(): Char {
 		return this.charBuf[this.bufPos];
-	}
-
+  }
+  
 	/**
 	 * Get the char at the current position.
 	 * @return {Char}
@@ -71,9 +124,9 @@ export class CharacterReader {
 	current(): Char {
 		this.bufferUp();
 		return this.isEmptyNoBufferUp() ? CharacterReader.EOF : this.getAtPos();
-	}
-
-	consume(): Char {
+  }
+  
+  consume(): Char {
 		this.bufferUp();
 		let val = this.isEmptyNoBufferUp() ? CharacterReader.EOF : this.getAtPos();
 		this.bufPos++;
@@ -87,23 +140,25 @@ export class CharacterReader {
 	unconsume(): void {
 		if (this.bufPos < 1) throw new Error(`WTF: No buffer left to unconsume.`);
 		else this.bufPos--;
-	}
-
+  }
+  
 	/**
 	 * Moves the current position by one.
 	 */
 	advance(): void {
 		this.bufPos++;
-	}
-
-	mark() {
+  }
+  
+  mark() {
 		//make sure there is enough look ahead capacity
-		//if (this.bufLength - this.bufPos < CharacterReader.minReadAheadLen) this.bufSplitPoint = 0;
+		if (this.bufLength - this.bufPos < CharacterReader.minReadAheadLen) {
+      this.bufSplitPoint = 0;
+    }
 		this.bufferUp();
 		this.bufMark = this.bufPos;
-	}
-
-	unmark(): void {
+  }
+  
+  unmark(): void {
 		this.bufMark = -1;
 	}
 
@@ -111,18 +166,47 @@ export class CharacterReader {
 		if (this.bufMark === -1) throw new Error('Mark invalid');
 		this.bufPos = this.bufMark;
 		this.unmark();
-	}
-
+  }
+  
 	/**
 	 * Returns the number of characters between the current position and the next instance of the input char
 	 * @param c scan target
 	 * @return offset between current position and next instance of target. -1 if not found.
 	 */
-	nextIndexOf(c: Char | string): number {
-		this.bufferUp();
-		let str: string = c instanceof Char ? c.string : c;
-		let index = this.reader.indexOf(str, this.bufPos);
-		return index === -1 ? -1 : index - this.bufPos;
+  nextIndexOf(c: Char | string): number {
+    this.bufferUp();
+
+    // [Char]
+    if (c instanceof Char) for (let i = this.bufPos; i < this.bufLength; i++) {
+      if (c === this.charBuf[i]) return i - this.bufPos;
+    }
+
+    // [string]
+    else if (Objects.isString(c)) {
+      let seq: string = c;
+      let startChar: Char = Char.of(seq.charCodeAt(0));
+      for (let offset = this.bufPos; offset < this.bufLength; offset++) {
+
+        // scan to first instance of startchar:
+        if (!startChar.equals(this.charBuf[offset])) {
+          while (++offset < this.bufLength && !startChar.equals(this.charBuf[offset])) { /* empty */ }
+        }
+
+        let i = offset + 1;
+        let last = i + seq.length - 1;
+        if (offset < this.bufLength && last <= this.bufLength) {
+          for (let j = 1; i < last && this.charBuf[i].equals(seq.charAt(j)); i++, j++) { /* empty */ }
+          if (i === last) return offset - this.bufPos;
+        }
+      }
+
+    }
+
+    return -1;
+  }
+
+  private sliceBuf(bufPos: number=this.bufPos): Char[] {
+		return this.charBuf.slice(bufPos);
 	}
 
 	/**
@@ -131,36 +215,45 @@ export class CharacterReader {
 	 * @return the chars read
 	 */
 	consumeTo(c: Char): string;
-	consumeTo(string: string): string;
-	consumeTo(c: Char | string): string {
-		let seq = c instanceof Char ? c.string : c;
-		let offset = this.nextIndexOf(seq);
-		if (offset !== -1) {
-			let consumed = CharacterReader.cacheString(this.charBuf, this.stringCache, this.bufPos, offset);
-			this.bufPos += offset;
-			return consumed;
-		}
-		//
-		else if (Char.isChar(c) || c.length === 1 || this.bufLength - this.bufPos < seq.length) {
-			// nextIndexOf() did a bufferUp(), so if the buffer is shorter than the search string, we must be at EOF
-			return this.consumeToEnd();
-		}
-		//
-		else {
-			// the string we're looking for may be straddling a buffer boundary, so keep (length - 1) characters
-			// unread in case they contain the beginning of the search string
-			let endPos = this.bufLength - seq.length + 1;
-			let consumed = CharacterReader.cacheString(this.charBuf, this.stringCache, this.bufPos, endPos - this.bufPos);
-			this.bufPos = endPos;
-			return consumed;
-		}
-	}
+  consumeTo(string: string): string;
+  /** @private */
+  consumeTo(c: Char | string): string {
 
-	private returnConsume(index: number): string {
-		let pos = this.bufPos;
-		this.bufPos += Math.max(index, 0);
-		return index === -1 ? '' : CharacterReader.cacheString(this.charBuf, this.stringCache, pos, index);
-	}
+    // [Char]
+    if (Char.isChar(c)) {
+      let offset = this.nextIndexOf(c);
+      if (offset === -1) return this.consumeToEnd();
+      else {
+        let consumed = CharacterReader.cacheString(this.charBuf, this.stringCache, this.bufPos, offset);
+        this.bufPos += offset;
+        return consumed;
+      }
+    }
+
+    // [string]
+    else {
+      let seq: string = c;
+      let offset = this.nextIndexOf(c);
+      if (offset !== -1) {
+        let consumed = CharacterReader.cacheString(this.charBuf, this.stringCache, this.bufPos, offset);
+        this.bufPos += offset;
+        return consumed;
+      } //
+      else if (this.bufLength - this.bufPos < seq.length) {
+        // nextIndexOf() did a bufferUp(), so if the buffer is shorter than the search string, we must be at EOF
+        return this.consumeToEnd();
+      } //
+      else {
+        // the string we're looking for may be straddling a buffer boundary, so keep (length - 1) characters
+        // unread in case they contain the beginning of the search string
+        let endPos = this.bufLength - seq.length + 1;
+        let consumed = CharacterReader.cacheString(this.charBuf, this.stringCache, this.bufPos, endPos - this.bufPos);
+        this.bufPos = endPos;
+        return consumed;
+      }
+    }
+
+  }
 
 	/**
 	 * Read characters until the first of any delimiters is found.
@@ -169,27 +262,25 @@ export class CharacterReader {
 	 */
 	consumeToAny(chars: string[]): string;
 	consumeToAny(chars: Char[]): string;
-
 	/** @private */
-	consumeToAny(array: Char[] | string[]): string {
-		this.bufferUp();
-		let strings: string[] = array[0] instanceof Char ?(<Char[]>array).map(ch=>ch.string) : <string[]>array;
-		let buf = this.sliceBuf();
-		return this.returnConsume(buf.findIndex(ch => ch.in(strings)));
-	}
-
-	// Java: Arrays.binarySearch()
+	consumeToAny(array: any[]): string {
+    this.bufferUp();
+    let index = this.sliceBuf().findIndex(ch => ch.in(array));
+    return this.returnConsume(index);
+  }
+  
+  // Java: Arrays.binarySearch()
 	consumeToAnySorted(chars: Char[]): string {
 		return this.consumeToAny(chars);
 	}
 
-	// &, <, null
+  // &, <, null
 	consumeData(): string {
-		let chars = [Char.of('&'), Char.of('<'), Char.Default];
+		let chars = ['&', '<', '\u0000'];
 		return this.consumeToAny(chars);
-	}
+  }
 
-	// & , ' , "
+  // & , ' , "
 	consumeAttributeQuoted(single: boolean): string {
 		return this.returnConsume(
 			this.sliceBuf().findIndex((ch) => {
@@ -200,32 +291,29 @@ export class CharacterReader {
 			}),
 		);
 	}
-
-	// < | nullChar
+  
+  // < | nullChar
 	consumeRawData(): string {
-		return this.returnConsume(this.sliceBuf().findIndex((ch) => ch.equals('<') || ch === Char.Default));
-	}
+    let index = this.sliceBuf().findIndex((ch) => ch.equals('<') || ch === Char.Default);
+		return this.returnConsume(index);
+  }
 
-	// '\t', '\n', '\r', '\f', ' ', '/', '>'
+  // '\t', '\n', '\r', '\f', ' ', '/', '>'
 	consumeTagName(): string {
 		// NOTE: out of spec, added '<' to fix common author bugs; does not stop and append on nullChar but eats
 		this.bufferUp();
 		let array = ['\t', '\n', '\r', '\f', ' ', '/', '>', '<'];
 		return this.returnConsume(this.sliceBuf().findIndex((ch) => ch.in(array)));
-	}
-
-	private sliceBuf(bufPos: number=this.bufPos): Char[] {
-		return this.charBuf.slice(bufPos);
-	}
-
-	consumeToEnd(): string {
+  }
+  
+  consumeToEnd(): string {
 		this.bufferUp();
 		let data = CharacterReader.cacheString(this.charBuf, this.stringCache, this.bufPos, this.bufLength - this.bufPos);
 		this.bufPos = this.bufLength;
 		return data;
 	}
-
-	consumeLetterSequence(): string {
+  
+  consumeLetterSequence(): string {
 		this.bufferUp();
 		return this.returnConsume(this.sliceBuf().findIndex((ch) => !Objects.isLetter(ch.string)));
 	}
@@ -388,4 +476,13 @@ export class CharacterReader {
 	rangeEquals(start: number, count: number, cached: string): boolean {
 		return CharacterReader.rangeEquals(this.charBuf, start, count, cached);
 	}
+
+	private returnConsume(index: number): string {
+		index = index === -1 ? this.bufLength : index + this.bufPos;
+		let start = this.bufPos;
+		this.bufPos = index;
+		return index > start ? CharacterReader.cacheString(this.charBuf, this.stringCache, start, index -start) : "";
+  }
+  
+
 }
