@@ -39,7 +39,7 @@ export class NodeVisitorImpl implements NodeVisitor {
   }
 
   set_tailCb(callback: NodeVisitorArg): this {
-    this.cbHeadNode = callback;
+    this.cbTailNode = callback;
     return this;
   }
 

@@ -3,6 +3,7 @@ import { Assert } from "../helper/Assert";
 import { Normalizer } from "../helper/Normalizer";
 import { Objects } from "../helper/Objects";
 import { Attributes } from "./Attributes";
+import { OutputSetting } from "../parse/Setting";
 
 /**
  * A single key + value attribute.
@@ -110,7 +111,7 @@ export class Attribute {
   static shouldCollapseAttribute(
     key: string,
     val: string,
-    setting: any//OutputSetting
+    setting: OutputSetting
   ): boolean {
     let iHtml = setting.syntax === "html";
     let isValKey = Objects.isEmpty(val) || Objects.equalsIgnoreCase(val, key);

@@ -1,10 +1,7 @@
-import { Parser } from "../parse/Parser";
 import { Tag } from "../parse/Tag";
 import { Attributes } from "./Attributes";
 import { Elements } from "../select/Elements";
-import { Node } from "./1004_Node";
-import { TextNode } from "./TextNode";
-import { DataNode } from "./DataNode";
+import { Node, NodeType } from "./1004_Node";
 import { Selector } from "../select/Selector";
 import { Collector } from "../select/Collector";
 import { QueryParser } from "../select/QueryParser";
@@ -15,12 +12,14 @@ import { NodeList } from "./NodeList";
 import { Objects } from "../helper/Objects";
 import { Normalizer } from "../helper/Normalizer";
 import { StringUtil } from "../helper/StringUtil";
-import { CDataNode } from "./CDataNode";
 import { NodeTraversor } from "../select/NodeTraversor";
 import { NodeVisitorImpl } from "../select/NodeVisitor";
 import { Evaluator } from "../select/Evaluator";
 import * as EvaluatorNS from "../select/Evaluator";
 import { Document } from "./Document";
+import { NodeUtils } from "./NodeUtils";
+import { TextNode } from "./TextNode";
+import { DataNode } from "./DataNode";
 const {isString, notNull, notEmpty, isNull, equalsIgnoreCase} = Objects;
 
 class WeakReference<T> {
@@ -39,8 +38,8 @@ class WeakReference<T> {
  */
 export class Element extends Node {
 
-  static is(node: any): node is Element {
-    return node instanceof Element;
+  get nodeType(): NodeType {
+    return NodeType.Element;
   }
 
   static get BaseUriKey(): string { 
@@ -105,6 +104,10 @@ export class Element extends Node {
     if (notNull(baseUri)) {
       this.setBaseUri(baseUri);
     }
+  }
+
+  isElement(): boolean {
+    return true;
   }
 
   /**
@@ -325,7 +328,7 @@ export class Element extends Node {
       let isRefNoNull = notNull(this.shadowChildrenRef);
       if (isRefNoNull && isNull(children)) return children;
       else {
-        let filterNode:any[] = this.childNodes().filter((el) => Element.is(el));
+        let filterNode:any[] = this.childNodes().filter((el) => NodeUtils.isElement(el));
         this.shadowChildrenRef = new WeakReference(filterNode);
         return children = filterNode;
       }
@@ -357,7 +360,7 @@ export class Element extends Node {
    * </ul>
    */
   textNodes(): TextNode[] {
-    return <any[]>this.childNodes().filter((node) => TextNode.is(node));
+    return <any[]>this.childNodes().filter((node) => NodeUtils.isTextNode(node));
   }
 
   /**
@@ -370,7 +373,7 @@ export class Element extends Node {
    * @see #data()
    */
   dataNodes(): DataNode[] {
-    return <any[]>this.childNodes().filter((node) => DataNode.is(node));
+    return <any[]>this.childNodes().filter((node) => NodeUtils.isDataNode(node));
   }
 
   /**
@@ -855,7 +858,7 @@ export class Element extends Node {
    * @return The first matching element by ID, starting with this element, or null if none found.
    */
   getElementById(id: string): Element {
-    Assert.notEmpty(id);
+    id = Assert.notEmpty(id);
     let elements = Collector.collect(new EvaluatorNS.Id(id), this);
     return elements?.get(0) || null;
   }
@@ -914,7 +917,7 @@ export class Element extends Node {
 
   /**
    * Find elements that either do not have this attribute, or have it with a different value. Case insensitive.
-   *
+   * @match `[attrName!= attrValue]`
    * @param key name of the attribute
    * @param value value of the attribute
    * @return elements that do not have a matching attribute
@@ -926,7 +929,7 @@ export class Element extends Node {
 
   /**
    * Find elements that have attributes that start with the value prefix. Case insensitive.
-   *
+   * @match `[attrName^= attrValue]`
    * @param key name of the attribute
    * @param valuePrefix start of attribute value
    * @return elements that have attributes that start with the value prefix
@@ -938,7 +941,7 @@ export class Element extends Node {
 
   /**
    * Find elements that have attributes that end with the value suffix. Case insensitive.
-   *
+   * @match `[attrName$=attrValue]`
    * @param key name of the attribute
    * @param valueSuffix end of the attribute value
    * @return elements that have attributes that end with the value suffix
@@ -950,16 +953,14 @@ export class Element extends Node {
 
   /**
    * Find elements that have attributes whose value contains the match string. Case insensitive.
-   *
+   * @match `[attrName*=attrValue]`
    * @param key name of the attribute
    * @param match substring of value to search for
    * @return elements that have attributes containing this text
    */
-  getElementsByAttributeValueContaining(key: string, match: string): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeWithValueContaining(key, match),
-    //   this
-    // );
+  getElementsByAttributeValueContaining(key: string, match: string): Elements {
+    let evalu = new EvaluatorNS.AttributeWithValueContaining(key, match);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -968,14 +969,9 @@ export class Element extends Node {
    * @param pattern compiled regular expression to match against attribute values
    * @return elements that have attributes matching this regular expression
    */
-  getElementsByAttributeValueMatching(
-    key: string,
-    pattern: string | RegExp
-  ): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.AttributeWithValueMatching(key, pattern),
-    //   this
-    // );
+  getElementsByAttributeValueMatching(key: string,pattern: string | RegExp): Elements {
+    let evalu = new EvaluatorNS.AttributeWithValueMatching(key, pattern);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -983,8 +979,28 @@ export class Element extends Node {
    * @param index 0-based index
    * @return elements less than index
    */
-  getElementsByIndexLessThan(index: number): Elements {throw Error(`not impl`);
-    // return Collector.collect(new EvaluatorNS.IndexLessThan(index), this);
+  lt(index: number): Elements {
+    return this.getElementsByIndexLessThan(index);
+  }
+
+  /**
+   * Find elements whose sibling index is less than the supplied index.
+   * @param index 0-based index
+   * @return elements less than index
+   */
+  getElementsByIndexLessThan(index: number): Elements {
+    let evalu = new EvaluatorNS.IndexLessThan(index);
+    return Collector.collect(evalu, this);
+  }
+
+  /**
+   * Find elements whose sibling index is greater than the supplied index.
+   * @param index 0-based index
+   * @return elements greater than index
+   * @see #getElementsByIndexGreaterThan(number)
+   */
+  gt(index: number): Elements {
+    return this.getElementsByIndexGreaterThan(index);
   }
 
   /**
@@ -992,8 +1008,9 @@ export class Element extends Node {
    * @param index 0-based index
    * @return elements greater than index
    */
-  getElementsByIndexGreaterThan(index: number): Elements {throw Error(`not impl`);
-    // return Collector.collect(new EvaluatorNS.IndexGreaterThan(index), this);
+  getElementsByIndexGreaterThan(index: number): Elements {
+    let evalu = new EvaluatorNS.IndexGreaterThan(index);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -1001,8 +1018,9 @@ export class Element extends Node {
    * @param index 0-based index
    * @return elements equal to index
    */
-  getElementsByIndexEquals(index: number): Elements {throw Error(`not impl`);
-    // return Collector.collect(new EvaluatorNS.IndexEquals(index), this);
+  getElementsByIndexEquals(index: number): Elements {
+    let evalu = new EvaluatorNS.IndexEquals(index);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -1012,8 +1030,9 @@ export class Element extends Node {
    * @return elements that contain the string, case insensitive.
    * @see Element#text()
    */
-  getElementsContainingText(searchText: string) {throw Error(`not impl`);
-    // return Collector.collect(new EvaluatorNS.ContainsText(searchText), this);
+  getElementsContainingText(searchText: string) {
+    let evalu = new EvaluatorNS.ContainsText(searchText);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -1023,11 +1042,9 @@ export class Element extends Node {
    * @return elements that contain the string, case insensitive.
    * @see Element#ownText()
    */
-  getElementsContainingOwnText(searchText: string): Elements {throw Error(`not impl`);
-    // return Collector.collect(
-    //   new EvaluatorNS.ContainsOwnText(searchText),
-    //   this
-    // );
+  getElementsContainingOwnText(searchText: string): Elements {
+    let evalu = new EvaluatorNS.ContainsOwnText(searchText);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -1036,8 +1053,9 @@ export class Element extends Node {
    * @return elements matching the supplied regular expression.
    * @see Element#text()
    */
-  getElementsMatchingText(pattern: string | RegExp): Elements {throw Error(`not impl`);
-    // return Collector.collect(new EvaluatorNS.Matches(pattern), this);
+  getElementsMatchingText(pattern: string | RegExp): Elements {
+    let evalu = new EvaluatorNS.Matches(pattern);
+    return Collector.collect(evalu, this);
   }
 
   /**
@@ -1046,21 +1064,22 @@ export class Element extends Node {
    * @return elements matching the supplied regular expression.
    * @see Element#ownText()
    */
-  getElementsMatchingOwnText(pattern: string | RegExp): Elements {throw Error(`not impl`);
-    // return Collector.collect(new EvaluatorNS.MatchesOwn(pattern), this);
+  getElementsMatchingOwnText(pattern: string | RegExp): Elements {
+    let evalu = new EvaluatorNS.MatchesOwn(pattern);
+    return Collector.collect(evalu, this);
   }
 
   /**
    * Find all elements under this element (including self, and children of children).
-   *
    * @return all elements
    */
-  getAllElements() {
-    // return Collector.collect(new EvaluatorNS.AllElement(), this);
+  getAllElements(): Elements {
+    let evalu = new EvaluatorNS.AllElement();
+    return Collector.collect(evalu, this);
   }
 
   /**
-   * Add a class name to this element's {@code class} attribute.
+   * Add a class name to this element's `class` attribute.
    * @param className class name to add
    * @return this element
    */
@@ -1072,7 +1091,7 @@ export class Element extends Node {
   }
 
   /**
-   * Remove a class name from this element's {@code class} attribute.
+   * Remove a class name from this element's `class` attribute.
    * @param className class name to remove
    * @return this element
    */
@@ -1080,12 +1099,12 @@ export class Element extends Node {
     Assert.notNull(className);
     let classes = this.classNames();
     classes.delete(className);
-    this.classNames([...classes.values()]);
+    this.classNames(classes);
     return this;
   }
 
   /**
-    * Toggle a class name on this element's {@code class} attribute: if present, remove it; otherwise add it.
+    * Toggle a class name on this element's `class` attribute: if present, remove it; otherwise add it.
     * @param className class name to toggle
     * @return this element
     */
@@ -1177,7 +1196,7 @@ export class Element extends Node {
       Assert.notNull(classNames);
       let set = classNames instanceof Set ? classNames : new Set(classNames);
       if (set.size === 0) this.attributes().remove("class");
-      else  {this.attributes().set("class", [...set.values()].join(" ") );}
+      else  {this.attributes().set("class", set);}
       return this;
     }
   }
@@ -1212,7 +1231,7 @@ export class Element extends Node {
    * */
   hasText(): boolean {
     return this.childNodes().some((node) => {
-      if (TextNode.is(node)) return !node.isBlank();
+      if (NodeUtils.isTextNode(node)) return !node.isBlank();
       else if (node instanceof Element) return node.hasText();
       else return false;
     });
@@ -1232,72 +1251,67 @@ export class Element extends Node {
   text(text: string): this;
 
   /** @private */
-  text(text?: string): any {throw Error(`not impl`);
-    // // get text
-    // if (text === undefined) {
-    //   let accum = new StringBuilder();
-    //   let visitor = new NodeVisitorImpl()
-    //     .withHead((node, depth) => {
-    //       if (NodeUtils.isTextNode(node))
-    //         Element.appendNormalisedText(accum, node);
-    //       else if (
-    //         NodeUtils.isElement(node) &&
-    //         !accum.isEmpty() &&
-    //         (node.isBlock() || node.tagNode.getName() === "br") &&
-    //         !TextNode.lastCharIsWhitespace(accum)
-    //       ) {
-    //         accum.append(" ");
-    //       }
-    //     })
-    //     .withTail((node, depth) => {
-    //       if (
-    //         NodeUtils.isElement(node) &&
-    //         node.isBlock() &&
-    //         node.nextSibling() instanceof TextNode &&
-    //         !TextNode.lastCharIsWhitespace(accum)
-    //       ) {
-    //         accum.append(" ");
-    //       }
-    //     });
+  text(text?: string): any {
+    // get text
+    if (text === undefined) {
+      let accum = new StringBuilder();
+      NodeTraversor.traverse(new NodeVisitorImpl()
+      
+      .set_headCb((node, depth) => {
+        if (NodeUtils.isTextNode(node))Element.appendNormalisedText(accum, node);
+        else if (NodeUtils.isElement(node) && !accum.isEmpty() &&
+          (node.isBlock() || node.tagNode.getName() === "br") &&
+          !TextNode.lastCharIsWhitespace(accum) ) {
+          accum.append(" ");
+        }
+      })
 
-    //   NodeTraversor.traverse(visitor, this);
-    //   return accum.toString();
-    // }
+      
+      .set_tailCb((node, depth) => {
+        if (NodeUtils.isElement(node) && node.isBlock() &&
+          node.nextSibling() instanceof TextNode &&
+          !TextNode.lastCharIsWhitespace(accum)) {
+          accum.append(" ");
+        }
+      })
+      
+      ,this);
 
-    // // set text
-    // else return this.set_text(text);
+      return accum.toString();
+    }
+
+    // set text
+    else return this.set_text(text);
   }
 
-  protected set_text(text: string): Element {throw Error(`not impl`);
-    // Assert.notNull(text);
-    //   this.empty();
+  protected set_text(text: string): Element {
+    Assert.notNull(text);
 
-    //   let owner = this.getOwnerDocument();
-    //   let isContentForTagData: boolean =
-    //     owner?.parser().isContentForTagData(this.normalName()) || false;
-    //   if (notNull(owner) && isContentForTagData)
-    //     this.appendChild(new DataNode(text));
-    //   else this.appendChild(new TextNode(text));
-    //   return this;
+    // clear all node
+    this.empty();
+
+    // create & set
+    let owner = this.getOwnerDocument();
+    let isDataNode = notNull(owner) && owner.parser().isContentForTagData(this.normalName());
+    let childNode = isDataNode ? new DataNode(text) : new TextNode(text);
+    this.appendChild(childNode);
+    return this;
   }
 
   /**
-   * Get the combined data of this element. Data is e.g. the inside of a {@code <script>} tag. Note that data is NOT the
-   * text of the element. Use {@link #text()} to get the text that would be visible to a user, and {@code data()}
-   * for the contents of scripts, comments, CSS styles, etc.
+   * Get the combined data of this element. 
    * @return the data, or empty string if none
-   * @see #dataNodes()
    */
-  data(): string {throw Error(`not impl`);
-    // return this.childNodes()
-    //   .map((node) => {
-    //     if (NodeUtils.isDataNode(node)) return node.getWholeData();
-    //     else if (NodeUtils.isComment(node)) return node.getData();
-    //     else if (node instanceof Element) return node.data();
-    //     else if (node instanceof CDataNode) return node.getWholeText();
-    //     else return "";
-    //   })
-    //   .join("");
+  data(): string {
+    return this.childNodes()
+      .map((node) => {
+        if (NodeUtils.isDataNode(node)) return node.getWholeData();
+        else if (NodeUtils.isComment(node)) return node.getData();
+        else if (NodeUtils.isElement(node)) return node.data();
+        else if (NodeUtils.isCDataNode(node)) return node.getWholeText();
+        else return "";
+      })
+      .join("");
   }
 
   /**
@@ -1316,6 +1330,7 @@ export class Element extends Node {
    * @param {string=} html
    * */
   html(html?: string): any {
+
     // set html
     if (html !== undefined) {
       Assert.notEmpty(html);
@@ -1334,9 +1349,9 @@ export class Element extends Node {
   }
 
   htmlImpl(sb: StringBuilder) {
-    for (let pos = 0; pos < this.childNodeSize(); pos++) {
-      this.getChildNode(pos).outerHtmlImpl(sb);
-    }
+    for(let childNode of this.childNodes()) {
+		childNode.outerHtmlImpl(sb);
+	}
     return sb;
   }
 
@@ -1344,15 +1359,15 @@ export class Element extends Node {
    * Get the (unencoded) text of all children of this element
    * @return unencoded, un-normalized text
    */
-  wholeText(): string {throw Error(`not impl`);
-    // let accum = new StringBuilder();
-    // NodeTraversor.traverse(
-    //   new NodeVisitorImpl().withHead((node: Node, depth: number) => {
-    //     if (NodeUtils.isTextNode(node)) accum.append(node.getWholeText());
-    //   }),
-    //   this
-    // );
-    // return accum.toString();
+  wholeText(): string {
+    let accum = new StringBuilder();
+    NodeTraversor.traverse(new NodeVisitorImpl()
+      .set_headCb((node: Node, depth: number) => {
+        if (NodeUtils.isTextNode(node)) accum.append(node.getWholeText());
+      })
+      ,this
+    );
+    return accum.toString();
   }
 
   /**
@@ -1365,13 +1380,11 @@ export class Element extends Node {
     return sb.toString().trim();
   }
 
-  private ownTextImpl(accum: StringBuilder) {throw Error(`not impl`);
-    // for (let child of this.childNodes()) {
-    //   if (child instanceof TextNode)
-    //     Element.appendNormalisedText(accum, child);
-    //   else if (child instanceof Element)
-    //     Element.appendWhitespaceIfBr(child, accum);
-    // }
+  private ownTextImpl(accum: StringBuilder) {
+    for (let child of this.childNodes()) {
+      if (NodeUtils.isTextNode(child)) Element.appendNormalisedText(accum, child);
+      else if (NodeUtils.isElement(child))Element.appendWhitespaceIfBr(child, accum);
+    }
   }
 
   clone(): Element {
@@ -1393,11 +1406,7 @@ export class Element extends Node {
     );
   }
 
-  outerHtmlHead(
-    accum: StringBuilder,
-    depth: number,
-    setting: OutputSetting
-  ): void {
+  outerHtmlHead( accum: StringBuilder, depth: number, setting: OutputSetting  ): void {
     if (
       setting.prettyPrint &&
       this.isFormatAsBlock(setting) &&
@@ -1432,8 +1441,8 @@ export class Element extends Node {
     if (this.childNodeSize() > 1) return true;
     else
       return (
-        this.childNodeSize() === 1 &&
-        !TextNode.is(this.getChildNode(0))
+        this.childNodeSize() === 1 
+        &&!NodeUtils.isTextNode(this.childNode(0))
       );
   }
 
@@ -1457,38 +1466,42 @@ export class Element extends Node {
   }
 
   //TextNode
-  static appendNormalisedText(accum: StringBuilder, node: any) {throw Error(`not impl`);
-    // let text = node.getWholeText();
-    // let isSpace = Element.preserveWhitespace(node.parent());
-    // if (isSpace || node instanceof CDataNode) accum.append(text);
-    // else
-    //   StringUtil.appendNormalisedWhitespace(
-    //     accum,
-    //     text,
-    //     TextNode.lastCharIsWhitespace(accum)
-    //   );
+  static appendNormalisedText(accum: StringBuilder, node: any) {
+    let text = node.getWholeText();
+    let isSpace = Element.preserveWhitespace(node.parent());
+    if (isSpace || NodeUtils.isCDataNode(node)) accum.append(text);
+    else {
+      let isSpace = TextNode.lastCharIsWhitespace(accum);
+      StringUtil.appendNormalisedWhitespace(accum, text, isSpace);
+    }
   }
 
-  static appendWhitespaceIfBr(element: Element, accum: StringBuilder) {throw Error(`not impl`);
-    // let name = element.tag().getName();
-    // if (name === "br" && !TextNode.lastCharIsWhitespace(accum))
-    //   accum.append(" ");
+  static appendWhitespaceIfBr(element: Element, accum: StringBuilder) {
+    let name = element.tag().getName();
+    if (name === "br" && !TextNode.lastCharIsWhitespace(accum))
+      accum.append(" ");
   }
 
   static preserveWhitespace(node: Node): boolean {
-    if (!(node instanceof Element)) return false;
-    else {
-      let i = 0;
-      let el: Element = node;
-      do {
-        let isSpace = el.tag().preserveWhitespace;
-        if (isSpace) return true;
-        el = el.parent();
-        i++;
-      } while (i < 6 && node !== null);
-	  
-	  // else
-	  return false;
-    }
+	  if(node instanceof Element) {
+		   let i = 0;
+		  let el: Element = node;
+		  do {
+			let isSpace = el.tag().preserveWhitespace;
+			if (isSpace) return true;
+			el = el.parent();
+			i++;
+		  } while (i < 6 && Objects.notNull(el));
+		  
+	  }
+	   return false;
   }
+}
+
+export class PseudoText extends Element {
+
+  get nodeType(): NodeType {
+    return NodeType.PseudoText;
+  }
+  
 }

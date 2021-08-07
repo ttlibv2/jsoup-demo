@@ -1,19 +1,18 @@
 import { ArrayList } from "../helper/ArrayList";
 import { Assert } from "../helper/Assert";
-// import { NodeUtils } from "../helper/NodeUtils";
-// import { Objects } from "../helper/Objects";
-// import { NodeFilter } from "./NodeFilter";
-// import { NodeTraversor } from "./NodeTraversor";
-// import { NodeVisitor } from "./NodeVisitor";
-// import { QueryParser } from "./QueryParser";
-// import { Selector } from "./Selector";
-// import { Comment } from "../nodes/Comment";
-// import { DataNode } from "../nodes/DataNode";
 import { Element } from "../nodes/Element";
-// import { FormElement } from "../nodes/FormElement";
 import { Node } from "../nodes/1004_Node";
 import { NodeList } from "../nodes/NodeList";
-// import { TextNode } from "../nodes/TextNode";
+import { Selector } from "./Selector";
+import { QueryParser } from "./QueryParser";
+import { Objects } from "../helper/Objects";
+import { NodeTraversor } from "./NodeTraversor";
+import { NodeUtils } from "../nodes/NodeUtils";
+import { FormElement } from "../nodes/FormElement";
+import { Comment } from "../nodes/Comment";
+import { TextNode } from "../nodes/TextNode";
+import { DataNode } from "../nodes/DataNode";
+import { NodeFilter } from "./NodeFilter";
 
 export class Elements extends ArrayList<Element> {
 
@@ -32,8 +31,7 @@ export class Elements extends ArrayList<Element> {
    * @return a deep copy
    */
   clone(): Elements {
-    throw Error('not support');
-    //return new Elements(this.all().map((el) => el.clone()));
+    return new Elements(this.all().map((el) => el.clone()));
   }
 
   add(element: Element, index?: number): void {
@@ -71,8 +69,8 @@ export class Elements extends ArrayList<Element> {
    * @return The attribute value from the first matched element that has the attribute..
    * @see #hasAttr(String)
    */
-  private get_attr(name: string): string {throw Error('not support');
-   // return this.find((el) => el.hasAttr(name))?.attr(name) || "";
+  private get_attr(name: string): string {
+   return this.find((el) => el.hasAttr(name))?.attr(name) || "";
   }
 
   /**
@@ -81,9 +79,9 @@ export class Elements extends ArrayList<Element> {
    * @param value attribute value
    * @return this
    */
-  private set_attr(name: string, value: string): this {throw Error('not support');
-    // this.forEach((el) => el.attr(name, value));
-    // return this;
+  private set_attr(name: string, value: string): this {
+    this.forEach((el) => el.attr(name, value));
+    return this;
   }
 
   /**
@@ -91,8 +89,8 @@ export class Elements extends ArrayList<Element> {
    * @param name attribute key
    * @return true if any of the elements have the attribute; false if none do.
    */
-  hasAttr(name: string): boolean {throw Error('not support');
-    // return this.some((el) => el.hasAttr(name));
+  hasAttr(name: string): boolean {
+    return this.some((el) => el.hasAttr(name));
   }
 
   /**
@@ -102,8 +100,8 @@ export class Elements extends ArrayList<Element> {
    * get absolute URLs from relative URLs, e.g.: {@code doc.select("a").eachAttr("abs:href")} .
    * @return a list of each element's attribute value for the attribute
    */
-  eachAttr(name: string): string[] {throw Error('not support');
-    // return this.filter((el) => el.hasAttr(name)).map((el) => el.attr(name));
+  eachAttr(name: string): string[] {
+    return this.filter((el) => el.hasAttr(name)).map((el) => el.attr(name));
   }
 
   /**
@@ -111,9 +109,9 @@ export class Elements extends ArrayList<Element> {
    * @param name The attribute to remove.
    * @return this (for chaining)
    */
-  removeAttr(name: string): this {throw Error('not support');
-    // this.forEach((el) => el.removeAttr(name));
-    // return this;
+  removeAttr(name: string): this {
+    this.forEach((el) => el.removeAttr(name));
+    return this;
   }
 
   /**
@@ -121,9 +119,9 @@ export class Elements extends ArrayList<Element> {
    * @param className class name to add
    * @return this
    */
-  addClass(className: string): this {throw Error('not support');
-    // this.forEach((el) => el.addClass(className));
-    // return this;
+  addClass(className: string): this {
+    this.forEach((el) => el.addClass(className));
+    return this;
   }
 
   /**
@@ -131,9 +129,9 @@ export class Elements extends ArrayList<Element> {
    * @param className class name to remove
    * @return this
    */
-  removeClass(className: string): this {throw Error('not support');
-    // this.forEach((el) => el.removeClass(className));
-    // return this;
+  removeClass(className: string): this {
+    this.forEach((el) => el.removeClass(className));
+    return this;
   }
 
   /**
@@ -141,9 +139,9 @@ export class Elements extends ArrayList<Element> {
    * @param className class name to add if missing, or remove if present, from every element.
    * @return this
    */
-  toggleClass(className: string): this {throw Error('not support');
-    // this.forEach((el) => el.toggleClass(className));
-    // return this;
+  toggleClass(className: string): this {
+    this.forEach((el) => el.toggleClass(className));
+    return this;
   }
 
   /**
@@ -151,8 +149,8 @@ export class Elements extends ArrayList<Element> {
    * @param className class name to check for
    * @return true if any do, false if none do
    */
-  hasClass(className: string): boolean {throw Error('not support');
-    // return this.some((el) => el.hasClass(className));
+  hasClass(className: string): boolean {
+    return this.some((el) => el.hasClass(className));
   }
 
   /**
@@ -172,12 +170,12 @@ export class Elements extends ArrayList<Element> {
   /**
    * @private
    */
-  val(value?: string): any {throw Error('not support');
-    // if (value === undefined) return this.first()?.val() || "";
-    // else {
-    //   this.forEach((el) => el.val(value));
-    //   return this;
-    // }
+  val(value?: string): any {
+    if (value === undefined) return this.first()?.val() || "";
+    else {
+      this.forEach((el) => el.val(value));
+      return this;
+    }
   }
 
   /**
@@ -189,8 +187,8 @@ export class Elements extends ArrayList<Element> {
    * @see ElementNS#text()
    * @see #eachText()
    */
-  text(): string {throw Error('not support');
-    // return this.map((el) => el.text()).join(" ");
+  text(): string {
+    return this.map((el) => el.text()).join(" ");
   }
 
   /**
@@ -198,16 +196,16 @@ export class Elements extends ArrayList<Element> {
      @return true if any element has non-blank text content.
      @see ElementNS#hasText()
      */
-  hasText(): boolean {throw Error('not support');
-    // return this.some((el) => el.hasText());
+  hasText(): boolean {
+    return this.some((el) => el.hasText());
   }
 
   /**
    * Get the text content of each of the matched elements.
    * @return A list of each matched element's text content.
    */
-  eachText(): string[] {throw Error('not support');
-    // return this.filter((el) => el.hasText()).map((el) => el.text());
+  eachText(): string[] {
+    return this.filter((el) => el.hasText()).map((el) => el.text());
   }
 
   /**
@@ -226,12 +224,12 @@ export class Elements extends ArrayList<Element> {
   /**
    * @private
    */
-  html(html?: string): any {throw Error('not support');
-    // if (html === undefined) return this.map((el) => el.html()).join("\n");
-    // else {
-    //   this.forEach((el) => el.html(html));
-    //   return this;
-    // }
+  html(html?: string): any {
+    if (html === undefined) return this.map((el) => el.html()).join("\n");
+    else {
+      this.forEach((el) => el.html(html));
+      return this;
+    }
   }
 
   /**
@@ -240,8 +238,8 @@ export class Elements extends ArrayList<Element> {
    * @see #text()
    * @see #html()
    */
-  outerHtml(): string {throw Error('not support');
-    // return this.map((el) => el.outerHtml()).join("\n");
+  outerHtml(): string {
+    return this.map((el) => el.outerHtml()).join("\n");
   }
 
   /**
@@ -262,9 +260,9 @@ export class Elements extends ArrayList<Element> {
    * @return this, for chaining
    * @see ElementNS#tagName(String)
    */
-  tagName(tagName: string): this {throw Error('not support');
-    // this.forEach((el) => el.tagName(tagName));
-    // return this;
+  tagName(tagName: string): this {
+    this.forEach((el) => el.tagName(tagName));
+    return this;
   }
 
   /**
@@ -317,10 +315,10 @@ export class Elements extends ArrayList<Element> {
    * @return this (for chaining)
    * @see ElementNS#wrap
    */
-  wrap(html: string): this {throw Error('not support');
-    // Assert.notEmpty(html);
-    // this.forEach((el) => el.wrap(html));
-    // return this;
+  wrap(html: string): this {
+    Assert.notEmpty(html);
+    this.forEach((el) => el.wrap(html));
+    return this;
   }
 
   /**
@@ -329,9 +327,9 @@ export class Elements extends ArrayList<Element> {
    * @return this (for chaining)
    * @see Node#unwrap
    * */
-  unwrap(): this {throw Error('not support');
-    // this.forEach((el) => el.unwrap());
-    // return this;
+  unwrap(): this {
+    this.forEach((el) => el.unwrap());
+    return this;
   }
 
   /**
@@ -341,9 +339,9 @@ export class Elements extends ArrayList<Element> {
    * @see ElementNS#empty()
    * @see #remove()
    * */
-  empty(): this {throw Error('not support');
-    // this.forEach((el) => el.empty());
-    // return this;
+  empty(): this {
+    this.forEach((el) => el.empty());
+    return this;
 	}
 	
 	remove(element: Element): number;
@@ -369,8 +367,8 @@ export class Elements extends ArrayList<Element> {
    * @param query A {@link Selector} query
    * @return the filtered list of elements, or an empty list if none match.
    */
-  select(query: string): Elements {throw Error('not support');
-    // return Selector.select(query, this);
+  select(query: string): Elements {
+    return Selector.select(query, this);
   }
 
   /**
@@ -383,9 +381,9 @@ export class Elements extends ArrayList<Element> {
    * @param query the selector query whose results should be removed from these elements
    * @return a new elements list that contains only the filtered results
    */
-  not(query: string): Elements {throw Error('not support');
-    // let out = Selector.select(query, this);
-    // return Selector.filterOut(this, out);
+  not(query: string): Elements {
+    let out = Selector.select(query, this);
+    return Selector.filterOut(this, out);
   }
 
   /**
@@ -406,9 +404,9 @@ export class Elements extends ArrayList<Element> {
    * @param query A selector
    * @return true if at least one element in the list matches the query.
    */
-  is(query: string): boolean {throw Error('not support');
-    // let evalu = QueryParser.parse(query);
-    // return this.some((el) => el.is(evalu));
+  is(query: string): boolean {
+    let evalu = QueryParser.parse(query);
+    return this.some((el) => el.is(evalu));
   }
 
   /**
@@ -453,29 +451,29 @@ export class Elements extends ArrayList<Element> {
    * @param next
    * @param all
    */
-  private siblings(query?: string, next?: boolean, all?: boolean): Elements {throw Error('not support');
-    // let elements = new Elements();
-    // let evalu: any = !Objects.isNull(query)
-    //   ? QueryParser.parse(<any>query)
-    //   : null;
-    // for (let e of this) {
-    //   do {
-    //     let sib = next ? e.nextElementSibling() : e.previousElementSibling();
-    //     if (Objects.isNull(sib)) break;
-    //     if (Objects.isNull(evalu) || sib.is(evalu)) elements.add(sib);
-    //     e = sib;
-    //   } while (all);
-    // }
-    // return elements;
+  private siblings(query?: string, next?: boolean, all?: boolean): Elements {
+    let elements = new Elements();
+    let evalu: any = !Objects.isNull(query)
+      ? QueryParser.parse(<any>query)
+      : null;
+    for (let e of this) {
+      do {
+        let sib = next ? e.nextElementSibling() : e.previousElementSibling();
+        if (Objects.isNull(sib)) break;
+        if (Objects.isNull(evalu) || sib.is(evalu)) elements.add(sib);
+        e = sib;
+      } while (all);
+    }
+    return elements;
   }
 
   /**
    * Get all of the parents and ancestor elements of the matched elements.
    * @return all of the parents and ancestor elements of the matched elements
    */
-  parents(): Elements {throw Error('not support');
-    // let els = this.map((el) => el.parent()).flat();
-    // return new Elements(els);
+  parents(): Elements {
+    let els = this.map((el) => el.parent()).flat();
+    return new Elements(els);
   }
 
   /**
@@ -500,9 +498,8 @@ export class Elements extends ArrayList<Element> {
    * @return this, for chaining
    */
   traverse(visitor: any): Elements {
-    throw Error('not support');
-    // NodeTraversor.traverse(visitor, this);
-    // return this;
+    NodeTraversor.traverse(visitor, this);
+    return this;
   }
 
   /**
@@ -511,9 +508,8 @@ export class Elements extends ArrayList<Element> {
    * @return this, for chaining
    */
   nodeFilter(filter: NodeFilter): Elements {
-    throw Error('not support');
-    // NodeTraversor.filter(filter, this);
-    // return this;
+    NodeTraversor.filter(filter, this);
+    return this;
   }
 
   /**
@@ -522,26 +518,24 @@ export class Elements extends ArrayList<Element> {
    * no forms.
    * {FormElement[]}
    */
-  forms(): any[] {
-    throw Error('not support');
-    // return <any>this.filter((el) => NodeUtils.isFormElement(el));
+  forms(): FormElement[] {
+    return <any>this.filter((el) => NodeUtils.isFormElement(el));
   }
 
   /**
    * Get {@link Comment} nodes that are direct child nodes of the selected elements.
    * @return Comment nodes, or an empty list if none.
    */
-  comments(): any[] {//Comment
-    throw Error('not support');
-    // return this.childNodesOfType(Comment);
+  comments(): Comment[] {
+    return this.childNodesOfType(Comment);
   }
 
   /**
    * Get {@link TextNode} nodes that are direct child nodes of the selected elements.
    * @return TextNode nodes, or an empty list if none.
    */
-  textNodes(): any[] { throw Error('not support');
-    // return this.childNodesOfType(TextNode);
+  textNodes(): TextNode[] { 
+    return this.childNodesOfType(TextNode);
   }
 
   /**
@@ -549,13 +543,12 @@ export class Elements extends ArrayList<Element> {
    * content of tags such as {@code script}, {@code style} etc and are distinct from {@link TextNode}s.
    * @return Comment nodes, or an empty list if none.
    */
-  dataNodes(): any[] { throw Error('not support');
-    // return this.childNodesOfType(DataNode);
+  dataNodes(): DataNode[] { 
+    return this.childNodesOfType(DataNode);
   }
 
   private childNodesOfType<T extends Node>(classType: any): T[] {
-    throw Error('not support');
-    // let fnc = (childNode: NodeList): any[] => childNode.filter((node) => node instanceof classType);
-    // return this.map((node) => fnc(node.childNodes())).flat();
+    let fnc = (childNode: NodeList): any[] => childNode.filter((node) => node instanceof classType);
+    return this.map((node) => fnc(node.childNodes())).flat();
   }
 }

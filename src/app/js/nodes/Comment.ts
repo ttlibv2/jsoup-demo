@@ -1,22 +1,25 @@
 import { StringBuilder } from "../helper/StringBuilder";
 import { Parser } from "../parse/Parser";
 import { OutputSetting, ParseSetting } from "../parse/Setting";
-import { Node } from "./1004_Node";
+import { NodeType } from "./1004_Node";
 import { LeafNode } from "./1006_LeafNode";
-import { Element } from "./Element";
+import { NodeUtils } from "./NodeUtils";
 import { XmlDeclaration } from "./XmlDeclaration";
+// import { XmlDeclaration } from "./XmlDeclaration";
 
 /**
  * A comment node.
  */
 export class Comment extends LeafNode {
-  static is(node: Node): node is Comment {
-    return node instanceof Comment;
-  }
+
   constructor(data: string) {
     super();
     this.value = data;
   }
+
+  get nodeType(): NodeType {
+		return NodeType.Comment;
+	}
 
   getNodeName(): string {
     return "#comment";
@@ -49,7 +52,7 @@ export class Comment extends LeafNode {
     let parent = this.parent();
     let isIf0 = () =>
       this.getSiblingIndex() === 0 &&
-      Element.is(parent) &&
+      NodeUtils.isElement(parent)&&
       parent.tag().formatAsBlock;
 
     if (pretty && isIf0() && setting.outline) {
@@ -60,11 +63,7 @@ export class Comment extends LeafNode {
     //
   }
 
-  outerHtmlTail(
-    accum: StringBuilder,
-    depth: number,
-    setting: OutputSetting
-  ): void {}
+  outerHtmlTail( accum: StringBuilder,depth: number, setting: OutputSetting): void {}
 
   static isXmlDeclarationData(data: string): boolean {
     return data.length > 1 && (data.startsWith("!") || data.startsWith("?"));

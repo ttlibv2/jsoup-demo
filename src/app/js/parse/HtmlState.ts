@@ -1689,6 +1689,8 @@ class HtmlState_InSelect extends HtmlState {
   static instance = new HtmlState_InSelect();
 
   process(t: TK.Token, tb: HtmlBuilder): boolean {
+    let name: string;
+
     switch (t.tokenType) {
       case TK.TokenType.Character:
         let c = t.asCharacter();
@@ -1707,7 +1709,7 @@ class HtmlState_InSelect extends HtmlState {
         return false;
       case TK.TokenType.StartTag:
         let start = t.asStartTag();
-        let name = start.normalName();
+        name = start.normalName();
         if (name === "html") return tb.process(start, HtmlStateNS.InBody);
         else if (name === "option") {
           if (tb.currentElement().normalName() === "option")

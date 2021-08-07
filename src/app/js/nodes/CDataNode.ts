@@ -1,5 +1,6 @@
 import { StringBuilder } from '../helper/StringBuilder';
 import { OutputSetting } from '../parse/Setting';
+import { NodeType } from './1004_Node';
 import { TextNode } from './TextNode';
 
 /**
@@ -14,6 +15,10 @@ export class CDataNode extends TextNode {
 	/* eslint-disable */
 	constructor(text: string) { 
 		super(text);
+	}
+
+	get nodeType(): NodeType {
+		return NodeType.CData;
 	}
 
 	getNodeName(): string {

@@ -3,10 +3,8 @@ import { Objects } from "../helper/Objects";
 import { StringBuilder } from "../helper/StringBuilder";
 import { ArrayList } from "../helper/ArrayList";
 import { Attribute } from "./Attribute";
-import { Document } from "./Document";
-import { OutputSetting, ParseSetting } from "../parse/Setting";
-import { Entities } from "./Entities";
 import { EqualsBuilder } from "../helper/EqualsBuilder";
+import { Entities } from "./Entities";
 
 /**
  * The attributes of an Element.
@@ -158,6 +156,13 @@ export class Attributes extends ArrayList<Attribute> {
 
   /**
    * Set a new attribute, or replace an existing one by key.
+   * @param name case <b>insensitive</b> attribute key
+   * @param values attribute value
+   * */
+  set(name: string, values: Iterable<string>): this;
+
+  /**
+   * Set a new attribute, or replace an existing one by key.
    * @param attribute attribute with case sensitive key
    * @return these attributes, for chaining
    * */
@@ -204,6 +209,14 @@ export class Attributes extends ArrayList<Attribute> {
       let name = first, value: boolean = last;
       if (!value) this.remove(name);
       else this.putIgnoreCase(first, null);
+    }
+
+    // [string, Iterable]
+    else if(Objects.isString(first) && Objects.isIterable(last)) {
+      let name: string = first, value = [...last].join(' ');
+      let attr = this.get(name);
+      if (Objects.notNull(attr)) attr.setValue(value);
+      else this.add(name, value);
     }
 
     return this;
@@ -269,15 +282,10 @@ export class Attributes extends ArrayList<Attribute> {
       // collapse checked=null, checked="", checked=checked; write out others
       if (!Attribute.shouldCollapseAttribute(key, val, setting)) {
         accum.append('="');
-        throw Error(`Entities.escapeImpl(
-          accum,
-          Objects.isNull(val) ? "" : val,
-          setting,
-          true,
-          false,
-          false
+        Entities.escapeImpl(accum,Objects.isNull(val) ? "" : val,setting,
+          true,false,false);
         
-        accum.append('"');)`);
+        accum.append('"');
       }
     }
 
@@ -291,7 +299,7 @@ export class Attributes extends ArrayList<Attribute> {
   equals(o: any): boolean {
     return EqualsBuilder.withClass(this, o)
       .append(this.size(), o.size())
-      .append(this, o)
+	  .append(this.all(), o.all())
       .isEquals();
   }
 

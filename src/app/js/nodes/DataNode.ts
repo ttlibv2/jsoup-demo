@@ -1,5 +1,6 @@
 import { StringBuilder } from '../helper/StringBuilder';
 import { OutputSetting } from '../parse/Setting';
+import { NodeType } from './1004_Node';
 import { LeafNode } from './1006_LeafNode';
 
 /**
@@ -7,16 +8,21 @@ import { LeafNode } from './1006_LeafNode';
  * where contents should not show in text().
  */
 export class DataNode extends LeafNode {
-	//
+	get nodeType(): NodeType {
+		return NodeType.Data;
+	}
 
 	/**
-     Create a new DataNode.
-     @param data data contents
-     */
-	/* eslint-disable */
+	 * Create a new DataNode.
+	 * @param data data contents
+	 * */
 	constructor(data: string) {
 		super();
 		this.value = data;
+	}
+
+	isDataNode(): boolean {
+		return true;
 	}
 
 	getNodeName(): string {

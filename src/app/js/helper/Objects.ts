@@ -1,5 +1,5 @@
 export abstract class Objects {
-  
+
   private constructor() {}
 
   static isPrimitive(object: any): boolean {
@@ -7,6 +7,10 @@ export abstract class Objects {
       (typeof object !== "object" && typeof object !== "function") ||
       object === null
     );
+  }
+
+  static isIterable<T>(object: any): object is Iterable<T> {
+    return typeof object[Symbol.iterator] === 'function';
   }
 
   static notEmpty(object: any): boolean {

@@ -9,22 +9,34 @@ import { NodeVisitorImpl } from "../select/NodeVisitor";
 import { Attribute } from "./Attribute";
 import { Attributes } from "./Attributes";
 import { Document } from "./Document";
-import { Element } from "./Element";
-import { Elements } from "../select/Elements";
 import { IObject } from "../helper/IObject";
 import { StringUtil } from "../helper/StringUtil";
 import { NodeList } from "./NodeList";
+import { Element } from "./Element";
+import { Elements } from "../select/Elements";
+import {NodeUtils} from './NodeUtils';
+
+export enum NodeType {
+  Node,
+  Element,
+  Text,
+  Data,
+  CData,
+  Comment,
+  Document,
+  DocumentType,
+  Form,
+  PseudoText,
+  Xml,
+  Leaf
+}
 
 /**
  * The base, abstract Node model.
  * Elements, Documents, Comments etc are all Node instances.
  */
 export abstract class Node implements IObject {
-
-  static is(node: any): node is Node {
-    return node instanceof Node;
-  }
-
+ 
   private parentNode: Node;
   private siblingIndex: number;
 
@@ -41,6 +53,10 @@ export abstract class Node implements IObject {
    * @return {boolean}
    */
   abstract hasAttributes(): boolean;
+
+   get nodeType(): NodeType {
+    return NodeType.Node;
+  }
 
   /**
    * Get all of the element's attributes.
@@ -237,7 +253,7 @@ export abstract class Node implements IObject {
    * @param index index of child node
    * @return the child node at this index.
    */
-  getChildNode(index: number): Node {
+  childNode(index: number): Node {
     return this.childNodes().get(index);
   }
 
@@ -248,11 +264,11 @@ export abstract class Node implements IObject {
    */
   abstract childNodes(): NodeList;
 
-  getFirstChild(): Node {
+  firstChild(): Node {
     return this.childNodes().firstNode();
   }
 
-  getLastChild(): Node {
+  lastChild(): Node {
     return this.childNodes().last();
   }
 
@@ -261,7 +277,7 @@ export abstract class Node implements IObject {
    * nodes
    * @return a deep copy of this node's children
    */
-  getChildNodesCopy(): NodeList {
+  childNodesCopy(): NodeList {
     return this.childNodes().clone();
   }
 
@@ -313,7 +329,7 @@ export abstract class Node implements IObject {
       this.addSiblingHtml(this.siblingIndex, object);
     } else {
       Assert.notNull(this.parentNode);
-      this.parentNode?.addChildren([object], this.siblingIndex);
+      this.parentNode.addChildren([object], this.siblingIndex);
     }
     return this;
   }
@@ -353,15 +369,15 @@ export abstract class Node implements IObject {
   private addSiblingHtml(index: number, html: string) {
     Assert.notNull(html);
     Assert.notNull(this.parentNode);
-    let context: any = this.parentNode instanceof Element ? this.parentNode : null;
+    let context: Element = this.getElementContext();
     let nodes = this.parser().parseFragment(html,context,this.getBaseUri());
-    this.parentNode?.addChildren(nodes, index);
+    this.parentNode.addChildren(nodes, index);
     return this;
   }
 
   private getElementContext(): Element {
-    if(Element.is(this.parentNode)) return this.parentNode;
-    if(Element.is(this)) return this;
+    if(NodeUtils.isElement(this.parentNode))return this.parentNode;
+    else if(NodeUtils.isElement(this))return this;
     else return null;
   }
 
@@ -373,8 +389,8 @@ export abstract class Node implements IObject {
     Assert.notEmpty(html);
     let context: Element = this.getElementContext();
     let wrapChild = this.parser().parseFragment(html, context, this.getBaseUri()) || [];
-    let firstWrap:any = wrapChild[0];
-    if (Element.is(firstWrap)) {
+    let firstWrap = wrapChild[0];
+    if (NodeUtils.isElement(firstWrap)) {
       let deepest = this.getDeepChild(firstWrap);
 
       if (Objects.notNull(this.parentNode)) {
@@ -396,6 +412,11 @@ export abstract class Node implements IObject {
     return this;
   }
 
+  private getDeepChild(el: Element): Element {
+    let children: Elements = el.children();
+    return children.size() > 0 ? this.getDeepChild(children.get(0)) : el;
+  }
+
   /**
    * Removes this node from the DOM, and moves its children up into the node's parent. This has the effect of dropping
    * the node but keeping its children.
@@ -408,11 +429,6 @@ export abstract class Node implements IObject {
     this.parentNode?.addChildren(childNodes.all(), this.siblingIndex);
     this.remove();
     return firstChild;
-  }
-
-  private getDeepChild(el: Element): Element {
-    let children: Elements = el.children();
-    return children.size() > 0 ? this.getDeepChild(children.get(0)) : el;
   }
 
   // Element overrides this to clear its shadow children elements
@@ -539,7 +555,7 @@ export abstract class Node implements IObject {
   protected reindexChildren(start: number) {
     let nodes = this.childNodes();
     for (let i = start; i < nodes.size(); i++) {
-      nodes[i].siblingIndex = i;
+      nodes.get(i).setSiblingIndex(i);
     }
   }
 
@@ -563,7 +579,7 @@ export abstract class Node implements IObject {
     if (Objects.notNull(this.parentNode)) {
       let siblings = this.parentNode.childNodes();
       let index = this.siblingIndex + 1;
-      if (siblings.size() > index) return siblings[index];
+      if (siblings.size() > index) return siblings.get(index);
     }
     return null;
   }
@@ -574,7 +590,7 @@ export abstract class Node implements IObject {
    */
   previousSibling(): Node | null {
     if(Objects.isNull(this.parentNode) || this.siblingIndex <=0 ) return null;
-    else return this.parentNode.childNodes()[this.siblingIndex - 1];
+    else return this.parentNode.childNodes().get(this.siblingIndex - 1);
   }
 
   /**
@@ -603,6 +619,13 @@ export abstract class Node implements IObject {
     return Parser.forNode(this);
   }
 
+  get_html(): string {
+    let accum = new StringBuilder();
+      this.htmlImpl(accum);
+      let trim = OutputSetting.forNode(this).prettyPrint;
+      return !!trim ? accum.toString().trim() : accum.toString();
+  }
+
   /**
    * Get the outer HTML of this node.
    * @return outer HTML
@@ -617,7 +640,13 @@ export abstract class Node implements IObject {
     let setting = OutputSetting.forNode(this);
     NodeTraversor.traverse(new NodeVisitorImpl()
       .set_headCb((node, depth) => node.outerHtmlHead(accum, depth, setting))
-      .set_tailCb((node, depth)=>node.outerHtmlTail(accum, depth, setting)), this);
+      .set_tailCb((node, depth)=>{
+		 
+		 if(node.getNodeName()!=="#text"){
+			 node.outerHtmlTail(accum, depth, setting)
+		  }
+		  
+	  }), this);
   }
 
   /**
@@ -641,11 +670,11 @@ export abstract class Node implements IObject {
     while (nodesToProcess.length > 0) {
       let currParent = nodesToProcess.pop();
       if(Objects.notNull(currParent)) {
-        let childNodes = currParent.childNodes() || [];
+        let childNodes = currParent.childNodes() || new NodeList();
         let length = currParent.childNodeSize() || 0;
         for (let i = 0; i < length; i++) {
-          let childClone = childNodes[i].doClone(currParent);
-          childNodes[i] = childClone;
+          let childClone = childNodes.get(i).doClone(currParent);
+          childNodes.set(i, childClone);
           nodesToProcess.push(childClone);
         }
       }
@@ -701,4 +730,6 @@ export abstract class Node implements IObject {
    * @param setting
    */
   abstract outerHtmlTail(accum: StringBuilder,depth: number,setting: OutputSetting ): void;
+
+
 }

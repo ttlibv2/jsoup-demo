@@ -1,3 +1,4 @@
+import { ArrayList } from "./ArrayList";
 import { EqualsBuilder } from "./EqualsBuilder";
 import { IObject } from "./IObject";
 import { Objects } from "./Objects";
@@ -49,6 +50,37 @@ export class MapEntry<K, V> implements IObject {
 }
 
 export class HashMap<K, V> extends Map<K, V> {
+  private readonly mapKey = new ArrayList<K>();
+
+  /**
+   * @override
+   * @param key 
+   */
+  delete(key: K): boolean {
+    key = this.get_key_map_eq(key);
+    this.mapKey.remove(key);
+    return super.delete(key);
+  }
+
+  /**
+   * @override
+   * @param key 
+   * @param value 
+   */
+  set(key: K, value: V): this {
+    key = this.get_key_map_eq(key);
+    return super.set(key, value);
+  }
+
+  /**
+   * @override
+   * @param key 
+   */
+  has(key: K): boolean {
+    key = this.get_key_map_eq(key);
+    return super.has(key);
+  }
+
   /**
    * Returns true if this map contains no key-value mappings.
    * @return {boolean}
@@ -57,13 +89,17 @@ export class HashMap<K, V> extends Map<K, V> {
     return this.size === 0;
   }
 
+  private equalsBuilder(lhs: any, rhs: any): EqualsBuilder {
+    return EqualsBuilder.create().append(lhs, rhs, true);
+  }
+
   /**
    * Returns true if this map maps one or more keys to the specified value
    * @param value - value whose presence in this map is to be tested
    * @return true if this map maps one or more keys to the specified value
    */
   containsValue(value: V): boolean {
-    return [...this.values()].some((v) => v === value);
+    return [...this.values()].some((v) => this.equalsBuilder(v, value).isEquals());
   }
 
   /**
@@ -72,15 +108,26 @@ export class HashMap<K, V> extends Map<K, V> {
    * @return true if this map contains a mapping for the specified key
    */
   containsKey(key: K): boolean {
-    return [...this.keys()].some((k) => k === key);
+    return [...this.keys()].some((k) => this.equalsBuilder(k, key).isEquals());
+  }
+
+  private arrKey(): K[] {
+    return [...this.keys()];
+  }
+
+  private get_key_map_eq(key: K): K {
+    if(Objects.isPrimitive(key)) return key;
+    else return this.arrKey().find(k => this.equalsBuilder(k, key).isEquals()) || null;
   }
 
   /**
+   * @override
    * Returns the value to which the specified key is mapped
    * @param key - the key whose associated value is to be returned
    * @return the value to which the specified key is mapped
    */
   get(key: K): V {
+    key = this.get_key_map_eq(key);
     return super.get(key);
   }
 
@@ -139,7 +186,6 @@ export class HashMap<K, V> extends Map<K, V> {
   remove(key: K, value: V = undefined): V {
     let oldValue = this.get(key);
     if (value === undefined || oldValue === value) this.delete(key);
-    this.delete(key);
     return oldValue;
   }
 
@@ -266,9 +312,11 @@ export class HashMap<K, V> extends Map<K, V> {
   }
 
   /**
+   * @override
    * Removes all of the mappings from this map
    */
   clear(): void {
+    this.mapKey.clear();
     super.clear();
   }
 

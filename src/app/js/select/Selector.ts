@@ -42,10 +42,8 @@ export abstract class Selector {
   /**
    * @private
    */
-  static select(
-    first: string | Evaluator,
-    last: Element | Iterable<Element>
-  ): Elements {
+  static select(first: string | Evaluator,last: Element | Iterable<Element> ): Elements {
+   
     // [Evaluator]
     if (first instanceof Evaluator && last instanceof Element) {
       Assert.notNull(first);
@@ -61,11 +59,7 @@ export abstract class Selector {
     }
 
     // [string, Iterable<Element>]
-    else if (
-      typeof first === "string" &&
-      Array.isArray(last) &&
-      last[0] instanceof Element
-    ) {
+    else if (typeof first === "string" &&Array.isArray(last) &&last[0] instanceof Element) {
       let query = Assert.notEmpty(first);
       let roots = Assert.notNull(last);
 
@@ -77,11 +71,13 @@ export abstract class Selector {
         let found = Selector.select(evaluator, root);
         let els = found.filter((el) => seenElements.put(el, true) === null);
         elements.addAll(els);
-        throw Error("HashMap<Element, Boolean> = new HashMap()");
+        //throw Error("HashMap<Element, Boolean> = new HashMap()");
       }
 
       return elements;
     }
+
+    else throw Error(`@arguments not support.`);
   }
 
   // exclude set. package open so that Elements can implement .not() selector.

@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "local_ssl": "ng serve --ssl --ssl-key ca/localhost.key --ssl-cert ca/localhost.crt",
-    "dev": "ng serve --proxy-config proxy/proxy.config.json  --disable-host-check",
+    "dev": "ng serve --proxy-config proxy/proxy.config.json --ssl --ssl-key ca/localhost.key --ssl-cert ca/localhost.crt --disable-host-check",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",

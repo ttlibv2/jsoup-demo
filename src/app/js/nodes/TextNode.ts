@@ -6,16 +6,15 @@ import { Element } from "./Element";
 import { StringUtil } from "../helper/StringUtil";
 import { Objects } from "../helper/Objects";
 import { Entities } from "./Entities";
-import { Node } from "./1004_Node";
+import { NodeType } from "./1004_Node";
 import { Document } from "./Document";
+import { NodeUtils } from "./NodeUtils";
 
 /**
  * A text node.
  */
 export class TextNode extends LeafNode {
-  static is(node: Node): node is TextNode {
-    return node instanceof TextNode;
-  }
+
   /**
    * Create a new TextNode representing the supplied (unencoded) text).
    * @param text raw text
@@ -24,6 +23,10 @@ export class TextNode extends LeafNode {
   constructor(text: string) {
 		super();
 		this.value = text;
+  }
+
+  get nodeType(): NodeType {
+    return NodeType.Text;
   }
 
   /** @override */
@@ -113,13 +116,13 @@ export class TextNode extends LeafNode {
     let siblingIndex = this.getSiblingIndex();
 
     // if pretty === true
-    let isIf0 = () => siblingIndex === 0 &&  Element.is(parent) &&  parent.tag().formatAsBlock && !this.isBlank;
+    let isIf0 = () => siblingIndex === 0 &&  NodeUtils.isElement(parent) &&  parent.tag().formatAsBlock && !this.isBlank;
     let isIf1 = () => setting.outline && this.siblingNodes().length > 0 && !this.isBlank();
     if (pretty && isIf0() && isIf1()) this.indent(accum, depth, setting);
 
     //
     let normaliseWhite = pretty && !Element.preserveWhitespace(parent);
-    let stripWhite = pretty && Document.is(parent);
+    let stripWhite = pretty && NodeUtils.isDocument(parent);
     Entities.escapeImpl( accum,  this.coreVal,  setting, false,  normaliseWhite, stripWhite   );
   }
 

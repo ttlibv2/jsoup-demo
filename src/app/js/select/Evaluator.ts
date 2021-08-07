@@ -1,13 +1,13 @@
-/*8eslint-disable */
+/*eslint-disable */
 import { ArrayList } from "../helper/ArrayList";
 import { Assert } from "../helper/Assert";
 import { Normalizer } from "../helper/Normalizer";
 import { Objects } from "../helper/Objects";
-import { Comment } from "../nodes/Comment";
 import { Document } from "../nodes/Document";
-import { DocumentType } from "../nodes/DocumentType";
-import { Element } from "../nodes/Element";
-import { XmlDeclaration } from "../nodes/XmlDeclaration";
+import { Element, PseudoText } from "../nodes/Element";
+import { NodeUtils } from "../nodes/NodeUtils";
+import {Tag as TagNode} from '../parse/Tag';
+import { NodeType } from "../nodes/1004_Node";
 
 /**
  * Evaluates that an element matches the selector.
@@ -28,6 +28,7 @@ export abstract class Evaluator {
 
 /** Evaluator for all element */
 export class AllElement extends Evaluator {
+
   matches(root: Element, element: Element): boolean {
     return true;
   }
@@ -42,6 +43,7 @@ export class AllElement extends Evaluator {
  * @match `<tag>`
  */
 export class Tag extends Evaluator {
+
   constructor(private tagName: string) {
     super();
   }
@@ -222,6 +224,7 @@ export class AttributeWithValue extends AttributeKeyPair {
  * @match `[attrName!= attrValue]`
  */
 export class AttributeWithValueNot extends AttributeKeyPair {
+
   /**
    * @param {string} attrName
    * @param {string} attrValue
@@ -526,7 +529,7 @@ export abstract class CssNthEvaluator extends Evaluator {
 
   matches(root: Element, element: Element): boolean {
     let p = element.parent();
-    if (Objects.isNull(p) || Document.isDoc(p)) return false;
+    if (Objects.isNull(p) || NodeUtils.isDocument(p)) return false;
     else {
       let pos = this.calculatePosition(root, element);
       if (this.a === 0) return pos === this.b;
@@ -699,7 +702,7 @@ export class IsFirstChild extends Evaluator {
   matches(root: Element, element: Element): boolean {
     let p = element.parent();
     if (Objects.isNull(p)) return false;
-    if (Document.isDoc(p)) return false;
+    if (NodeUtils.isDocument(p)) return false;
     else return element.elementSiblingIndex() === 0;
   }
 }
@@ -716,7 +719,7 @@ export class IsRoot extends Evaluator {
   }
 
   matches(root: Element, element: Element): boolean {
-    let r = Document.isDoc(root) ? root.child(0) : root;
+    let r = NodeUtils.isDocument(root) ? root.child(0) : root;
     return element === r;
   }
 
@@ -735,7 +738,7 @@ export class IsOnlyChild extends Evaluator {
   matches(root: Element, element: Element): boolean {
     let p = element.parent();
     if (Objects.isNull(p)) return false;
-    if (Document.isDoc(p)) return false;
+    if (NodeUtils.isDocument(p)) return false;
     else return element.siblingElements().isEmpty();
   }
 }
@@ -773,8 +776,9 @@ export class IsEmpty extends Evaluator {
   }
 
   matches(root: Element, element: Element): boolean {
-    let family = element.childNodes();
-    return !family.some(n => !(Comment.is(n) || XmlDeclaration.is(n) || DocumentType.is(n)))
+	  throw Error(`impl`);
+    //let family = element.childNodes();
+    //return !family.some(n => !(NodeUtils.isComment(n) || NodeUtils.isXmlDeclaration(n) || NodeUtils.isDocumentType(n)))
   }
 }
 
@@ -912,18 +916,18 @@ export class MatchText extends Evaluator {
   }
 
   matches(root: Element, element: Element): boolean {
-    // if(element instanceof PseudoTextElement) return true;
-    // else {
-    // 	let textNodes = element.textNodes();
-    // 	for(let node of textNodes) {
-    // 		let tag = TagNode.valueOf(element.tagName());
-    // 		let pel = new PseudoTextElement(tag, element.getBaseUri(), element.attributes());
-    // 		node.replaceWith(pel);
-    //     pel.appendChild(node);
-    // 	}
-    // 	return false;
-    // }
-    throw Error(`class MatchText extends Evaluator`);
+	  if(element.nodeType === NodeType.PseudoText)return true;
+	  else	{
+     	let textNodes = element.textNodes();
+		for(let node of textNodes) {
+    		let tag = TagNode.valueOf(element.tagName());
+    		let pel = new PseudoText(tag, element.getBaseUri(), element.attributes());
+     		node.replaceWith(pel);
+			pel.appendChild(node);
+     	}
+		return false;
+	  }
+	  
   }
 
 }
@@ -956,8 +960,8 @@ export class Has extends StructuralEvaluator {
     this.evaluator = evaluator;
   }
 
-  matches(root: Element, element: Element): boolean {throw new Error("Method not implemented.");
-    // return element.getAllElements().some(el => el !== element && this.evaluator.matches(element, el));
+  matches(root: Element, element: Element): boolean {
+    return element.getAllElements().some(el => el !== element && this.evaluator.matches(element, el));
   }
 
   toString(): string {

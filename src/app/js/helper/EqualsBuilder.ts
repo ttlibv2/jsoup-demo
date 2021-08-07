@@ -20,6 +20,10 @@ export class EqualsBuilder {
 		return sb;
 	}
 
+	static create(): EqualsBuilder {
+		return new EqualsBuilder();
+	}
+
 	//-----------------------
 
 	private equal: boolean = true;

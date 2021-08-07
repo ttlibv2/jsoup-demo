@@ -5,6 +5,7 @@ import { Evaluator } from "./Evaluator";
 import { NodeFilter, NodeFilterResult } from "./NodeFilter";
 import { NodeTraversor } from "./NodeTraversor";
 import { NodeVisitor } from "./NodeVisitor";
+import { NodeUtils } from "../nodes/NodeUtils";
 
 export class Accumulator implements NodeVisitor {
 
@@ -20,7 +21,7 @@ export class Accumulator implements NodeVisitor {
 
   head(node: Node, depth: number): void {
     let isMatch = () => this.evaluator.matches(this.root, <any>node);
-    if (Element.is(node) && isMatch()) {
+    if (NodeUtils.isElement(node) && isMatch()) {
       this.elements.add(node);
     }
   }
@@ -35,7 +36,7 @@ export class FirstFinder implements NodeFilter {
 
   head(node: Node, depth: number): NodeFilterResult {
     let isMatch = () => this.evaluator.matches(this.root, <any>node);
-    if (!Element.is(node) || !isMatch())return NodeFilterResult.CONTINUE;
+    if (!NodeUtils.isElement(node) || !isMatch())return NodeFilterResult.CONTINUE;
     else {
       this.match = node;
       return NodeFilterResult.STOP;

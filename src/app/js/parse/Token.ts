@@ -380,6 +380,7 @@ export abstract class Tag extends Token {
 }
 
 export class StartTag extends Tag {
+	
   get tokenType(): TokenType {
     return TokenType.StartTag;
   }

@@ -3,6 +3,8 @@ import { Elements } from "./Elements";
 import { Node } from "../nodes/1004_Node";
 import { NodeFilter, NodeFilterResult } from "./NodeFilter";
 import { NodeVisitor } from "./NodeVisitor";
+import { Objects } from "../helper/Objects";
+import { NodeUtils } from "../nodes/NodeUtils";
 
 /**
  * Depth-first node traversor. Use to iterate through all nodes under and including the specified root node.
@@ -37,15 +39,15 @@ import { NodeVisitor } from "./NodeVisitor";
             Assert.notNull(visitor);
             Assert.notNull(root);
 
-            let node: any = root, parent: any = null, depth = 0;
+            let node: Node = root, parent: Node = null, depth = 0;
 
-            while (node !== null) {
-                parent = node.parentNode;
+            while (Objects.notNull(node)) {
+                parent = node.parent();
                 visitor.head(node, depth);  // visit current node
 
                 // must have been replaced; find replacement
-                if (parent !== null && !node.hasParent()) {
-                    node = parent.childNode(node.siblingIndex);
+                if (Objects.notNull(parent) && !node.hasParent()) {
+                    node = parent.childNode(node.getSiblingIndex());
                 }
 
                 // descend
@@ -56,9 +58,10 @@ import { NodeVisitor } from "./NodeVisitor";
                 else {
                     while (true) {
                         Assert.notNull(node); // as depth > 0, will have parent
-                        if (!(node.nextSibling() === null && depth > 0)) break;
+						if(Objects.notNull(node.nextSibling()) || depth <=0) break; 
+                        //if (!(node.nextSibling() === null && depth > 0)) break;
                         visitor.tail(node, depth);
-                        node = node.parentNode;
+                        node = node.parent();
                         depth--;
                     }
 
@@ -73,15 +76,17 @@ import { NodeVisitor } from "./NodeVisitor";
 
 
         // root is Elements
-        if (Elements.is(node)) for(let element of node) {
+        if (NodeUtils.isElements(node)) for(let element of <Elements>node) {
             traverse_node(visitor, element);
         }
         
 
         // root is node
-        else if (Node.is(node)) {
+        else if (NodeUtils.isNode(node)) {
             traverse_node(visitor, node);
         }
+		
+		//throw Error(`impl`);
     }
 
     /**
@@ -106,7 +111,7 @@ import { NodeVisitor } from "./NodeVisitor";
         let filter_node = (filter: NodeFilter, root: Node): NodeFilterResult => {
             let node: any = root, depth = 0;
 
-            while (node !== null) {
+            while (Objects.notNull(node)) {
                 let result = filter.head(node, depth);
                 if (result === NodeFilterResult.STOP) return result;
 
@@ -161,15 +166,17 @@ import { NodeVisitor } from "./NodeVisitor";
         };
 
         // node is Elements
-        if (Elements.is(node)) {
-            for (let i = 0; i < node.size(); i++) {
-                let result = filter_node(filter, node.get(i));
+		//let isElement = node.constructor.name === `Elements`;
+        if (NodeUtils.isElements(node)) {
+			let nodes: Elements = <any>node;
+            for (let i = 0; i < nodes.size(); i++) {
+                let result = filter_node(filter, nodes.get(i));
                 if (result === NodeFilterResult.STOP) break;
             }
         }
 
         // node is Node
-        else if (Node.is(node)) {
+        else if (NodeUtils.isNode(node)) {
             return filter_node(filter, node);
         }
     }

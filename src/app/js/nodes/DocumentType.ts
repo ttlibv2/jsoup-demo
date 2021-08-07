@@ -4,30 +4,20 @@ import { Objects } from "../helper/Objects";
 import { StringBuilder } from "../helper/StringBuilder";
 import { StringUtil } from "../helper/StringUtil";
 import { OutputSetting } from "../parse/Setting";
-import { Node } from "./1004_Node";
+import { Node, NodeType } from "./1004_Node";
 import { LeafNode } from "./1006_LeafNode";
 
 /**
  * A {@code <!DOCTYPE>} node.
  */
 export class DocumentType extends LeafNode {
-  static is(node: Node): node is DocumentType {
-    return node instanceof DocumentType;
-  }
 
-  // static readonly PUBLIC_KEY = "PUBLIC";
-  // static readonly SYSTEM_KEY = "SYSTEM";
-  // static readonly NAME = "name";
-  // static readonly PUB_SYS_KEY = "pubSysKey"; // PUBLIC or SYSTEM
-  // static readonly PUBLIC_ID = "publicId";
-  // static readonly SYSTEM_ID = "systemId";
-
-  static get PUBLIC_KEY():string { return "PUBLIC";}
-  static get SYSTEM_KEY():string { return "SYSTEM";}
-  static get NAME():string { return "name";}
-  static get PUB_SYS_KEY():string { return "pubSysKey"; }// PUBLIC or SYSTEM
-  static get PUBLIC_ID():string { return "publicId";}
-  static get SYSTEM_ID():string { return "systemId";}
+  static readonly PUBLIC_KEY = "PUBLIC";
+  static readonly SYSTEM_KEY = "SYSTEM";
+  static readonly NAME = "name";
+  static readonly PUB_SYS_KEY = "pubSysKey"; // PUBLIC or SYSTEM
+  static readonly PUBLIC_ID = "publicId";
+  static readonly SYSTEM_ID = "systemId";
 
 
   /**
@@ -46,6 +36,10 @@ export class DocumentType extends LeafNode {
     this.attr(DocumentType.PUBLIC_ID, publicId);
     this.attr(DocumentType.SYSTEM_ID, systemId);
     this.updatePubSyskey();
+  }
+
+  get nodeType(): NodeType {
+    return NodeType.DocumentType;
   }
 
   setPubSysKey(value: string): this {

@@ -16,6 +16,7 @@ import { TextNode } from "../nodes/TextNode";
 import { HtmlState, HtmlStateNS } from "./HtmlState";
 import { Objects } from "../helper/Objects";
 import { TokeniserStateNS } from "./TokeniserState";
+import { NodeUtils } from "../nodes/NodeUtils";
 
 export class HtmlBuilder extends TreeBuilder {
   static readonly TagsSearchInScope: string[] = [
@@ -343,8 +344,7 @@ export class HtmlBuilder extends TreeBuilder {
     let attrs = this.setting.normalizeAttributes(startTag.attributes);
     let element = this.insertNode(new Element(tag, null, attrs));
     if (startTag.isSelfClosing()) {
-      if (!tag.isEmpty())
-        this.tokeniser.error("Tag cannot be self closing; not a void tag");
+      if (!tag.isEmpty())this.tokeniser.error("Tag cannot be self closing; not a void tag");
       else tag.setSelfClosing();
     }
     return element;
@@ -402,7 +402,7 @@ export class HtmlBuilder extends TreeBuilder {
     //
 
     // object is Element
-    if (Element.is(object)) {
+    if (NodeUtils.isElement(object)) {
       let el = this.insertNode(object);
       this.stack.push(el);
       return el;

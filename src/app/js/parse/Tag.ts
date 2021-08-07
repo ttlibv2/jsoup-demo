@@ -28,7 +28,7 @@ export class Tag {
 
 	// can self close (<foo />). used for unknown tags that self close,
 	// without forcing them as empty.
-	selfClosing: boolean = false;
+	_selfClosing: boolean = false;
 
 	// for pre, textarea, script etc
 	preserveWhitespace: boolean = false;
@@ -56,7 +56,7 @@ export class Tag {
 	 * @return if this tag should be output as self closing.
 	 */
 	get isSelfClosing(): boolean {
-		return this.empty || this.selfClosing;
+		return this.empty || this._selfClosing;
 	}
 
 	/**
@@ -84,7 +84,7 @@ export class Tag {
 	}
 
 	setSelfClosing(): this {
-		this.selfClosing = true;
+		this._selfClosing = true;
 		return this;
 	}
 

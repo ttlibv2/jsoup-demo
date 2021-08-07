@@ -1,15 +1,20 @@
 import { Assert } from '../helper/Assert';
 import { Objects } from '../helper/Objects';
 import { Attributes } from './Attributes';
-import { Node } from './1004_Node';
+import { Node, NodeType } from './1004_Node';
 import { NodeList } from './NodeList';
 
 export abstract class LeafNode extends Node {
+
 	protected value: any;
 
 	protected getValue(): any {
 		return this.value;
 	}
+
+	get nodeType(): NodeType {
+    return NodeType.Leaf;
+  }
 
 	/** @override */
 	hasAttributes(): boolean {
