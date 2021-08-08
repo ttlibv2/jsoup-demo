@@ -1,13 +1,17 @@
 import { Objects } from "./Objects";
+import {EqualsBuilder} from './EqualsBuilder';
 
-/*eslint-disable */
-export type ArrayPredicate<T> = (element: T, index: number, array: T[]) => boolean;
+export type ArrayPredicate<T> = (
+  element: T,
+  index: number,
+  array: T[]
+) => boolean;
 
-export class ArrayList<T> implements Iterable<T> {
-  private arrayList: Array<T>;
+export class ArrayList<T> extends Array<T> {
+  //private arrayList: Array<T>;
 
   /**
-   * Constructs an empty 
+   * Constructs an empty
    */
   constructor();
 
@@ -16,7 +20,7 @@ export class ArrayList<T> implements Iterable<T> {
    * @param {number} initialCapacity - the initial capacity of the list
    */
   constructor(initialCapacity: number);
-  
+
   /**
    * Constructs a list containing the elements of the specified collection
    */
@@ -24,19 +28,18 @@ export class ArrayList<T> implements Iterable<T> {
 
   /** private */
   constructor(object?: number | T[]) {
-    let arrayLength = ArrayList.getLengthArrayInit(object);
-    this.arrayList = new Array(arrayLength);
-    if(Objects.isArray(object)) this.arrayList.push(...object);
+    super(ArrayList.initLen(object));
+    if(Array.isArray(object)) this.addAll(object);
   }
 
-  private static getLengthArrayInit<T>(object: number | T[]): number {
+  private static initLen(object: any): number {
     if(Objects.isNumber(object)) return object;
     else if(Array.isArray(object)) return object.length;
     else return 0;
   }
 
   size(): number {
-    return this.arrayList.length;
+    return this.length;
   }
 
   isEmpty(): boolean {
@@ -49,8 +52,8 @@ export class ArrayList<T> implements Iterable<T> {
    * @param index
    */
   add(element: T, index?: number): void {
-    index = index || this.size();
-    this.arrayList.splice(index, 0, element);
+    index = Objects.defaultIfNull(index, () => this.size());
+    super.splice(index, 0, element);
   }
 
   /**
@@ -67,77 +70,101 @@ export class ArrayList<T> implements Iterable<T> {
    */
   addAll(elements: T[], index?: number): void {
     index = index || this.size();
-    this.arrayList.splice(index, 0, ...elements);
+    super.splice(index, 0, ...elements);
   }
 
   /**
-   * Replaces the element at the specified position in this list with the specified element.
-   * @param index 
-   * @param element 
+   * Replaces the element at pos
+   * @param {number} index
+   * @param {<T>} element
    */
   set(index: number, element: T): T {
     let elOld = this.get(index);
-    this.arrayList[index] = element;
+    this[index] = element;
     return elOld;
   }
 
   /**
-   * Removes all of the elements from this list (optional operation).
+   * Copy to array from `[start, end - 1]`
+   * @param {number=} start
+   * @param {number=} end
+   */
+  slice(start?: number, end?: number): T[] {
+    return super.slice(start, end);
+  }
+
+  /**
+   * Removes all of the elements
    */
   clear(): void {
-    this.arrayList.splice(0);
+    super.splice(0);
   }
 
   /**
    * Returns true if this list contains the specified element.
-   * @param o
+   * @param {<T>} o
    */
-  contains(o: any): boolean {
-    return this.arrayList.some((el) => this.objectEqual(el, o));
+  contains(o: T): boolean {
+    return super.some((el: T) => this.objectEqual(el, o));
   }
 
   /**
    * Returns the element at
-   * @param index
+   * @param {number} index
    */
   get(index: number): T {
-    return this.arrayList[index] || null;
+    return this[index] || null;
   }
 
   /**
-   * Returns the index of the first occurrence of the specified element in this list
-   * @param o
+   * Returns the index of the first elements
+   * @param {<T>} object
    */
-  indexOf(o: T): number {
-    return this.arrayList.findIndex((el) => this.objectEqual(el, o));
+  indexOf(object: T): number {
+    return this.findIndex((el: T) => this.objectEqual(el, object));
   }
 
   /**
-   * Returns the index of the last occurrence of the specified element in this list
-   * @param o
+   * Returns the index of the last elements
+   * @param {<T>} object
    */
-  lastIndexOf(o: T): number {
-    let array = this.arrayList.slice().reverse();
-    let index = array.findIndex((el) => this.objectEqual(el, o));
+  lastIndexOf(object: T): number {
+    let array = this.slice().reverse();
+    let index = array.findIndex((el: T) => this.objectEqual(el, object));
     return index === -1 ? -1 : this.size() - index;
   }
 
   /**
-   * Removes the element at
+   * Removes the element at pos
    * @param {number} index
-   * @param {number=1} count 
    */
-  removeAt(index: number, count: number=1): T {
-    return this.arrayList.splice(index, count)[0];
+  removeAt(index: number): T;
+
+  /**
+   * Removes the element at pos
+   * @param {number} index
+   * @param {number=1} count
+   */
+  removeAt(index: number, count: number): T[];
+
+  /**
+   * @private
+   * Removes the element at pos
+   * @param {number} index
+   * @param {number=1} count
+   */
+  removeAt(index: number, count?: number): any {
+    let array = this.splice(index, count || 1);
+    return Objects.isNull(count) ? array[0] : array;
   }
 
   /**
    * Removes the first occurrence of the specified element from this list
-   * @param o 
+   * @param o
    */
   remove(o: T): number {
     let index = this.indexOf(o);
-    if(index !==-1)this.arrayList.splice(index, 1);
+    if (index !== -1) this.splice(index, 1);
     return index;
   }
 
@@ -145,16 +172,20 @@ export class ArrayList<T> implements Iterable<T> {
    * Removes the last element from an array and returns it.
    */
   removeLast(): T {
-    return this.arrayList.pop();
+    return this.pop();
   }
 
   /**
    * Removes the first element from an array and returns it.
    */
   removeFirst(): T {
-    return this.arrayList.shift();
+    return this.shift();
   }
 
+  /**
+   * Remove element list
+   * @param {<T[]>} elements
+   */
   removeAll(elements: T[]): number {
     let num = 0;
     for (let el of elements) {
@@ -167,8 +198,14 @@ export class ArrayList<T> implements Iterable<T> {
     return num;
   }
 
-  removeIf(predicate: (value: T, index: number, array: T[]) => boolean): boolean {
-    let array = this.arrayList.filter(predicate);
+  /**
+   * Remove element if predicate => true
+   * @param predicate
+   */
+  removeIf(
+    predicate: (value: T, index: number, array: T[]) => boolean
+  ): boolean {
+    let array = this.filter(predicate);
     return this.removeAll(array) > 0;
   }
 
@@ -177,9 +214,8 @@ export class ArrayList<T> implements Iterable<T> {
    * @param {boolean=false} createNew if true then reverse in new array
    * @return {ArrayList<T>}
    */
-  reverse(createNew: boolean = false): ArrayList<T> {
-   let array = createNew ? this.arrayList.slice() : this.arrayList;
-   return createNew ? new ArrayList<T>(array) : this;
+  reverseNew(createNew: boolean = false): ArrayList<T> {
+    return createNew ? new ArrayList<T>(this.slice()) : this;
   }
 
   /**
@@ -188,112 +224,51 @@ export class ArrayList<T> implements Iterable<T> {
    * @param {number=} toIndex
    */
   sublist(fromIndex?: number, toIndex?: number): T[] {
-    return this.arrayList.slice(fromIndex, toIndex);
+    if(Objects.notNull(toIndex)) toIndex += 1;
+    return this.slice(fromIndex, toIndex);
   }
 
   /**
    * Adds all the elements of an array separated by the specified separator string.
-   * @param {string=} separator 
-   * @param {(element: T) => any} callbackfn 
+   * @param {string=} separator
+   * @param {(element: T) => any} callbackfn
    */
-  join(separator?: string, callbackfn?: (element: T)=> any): string {
-    callbackfn = callbackfn || (el => el);
-    return this.arrayList.map(s => callbackfn(s)).join(separator);
+  join(separator?: string, callbackfn?: (element: T) => any): string {
+    callbackfn = callbackfn || ((el) => el);
+    return this.map((s: T) => callbackfn(s)).join(separator);
   }
 
   /**
    * Returns the index of the first element
-   * @param predicate 
-   * @param thisArg 
+   * @param predicate
+   * @param thisArg
    */
   findIndex(predicate: ArrayPredicate<T>): number {
-    return this.arrayList.findIndex(predicate);
+    return super.findIndex(predicate);
   }
 
   /**
    * Returns the value of the first element
-   * @param predicate 
-   * @param thisArg 
+   * @param predicate
+   * @param thisArg
    */
   find(predicate: ArrayPredicate<T>): T {
-    return this.arrayList.find(predicate);
+    return super.find(predicate);
   }
-  
-  /**
-   * Returns the this object after filling the section identified by start and end
-   * @param {T} value 
-   * @param {number=0} start 
-   * @param {number=size()} end 
-   */
-  fill(value: T, start?: number, end?: number): this {
-    this.arrayList.fill(value, start, end);
+
+  all(): this {
     return this;
-  }
-
-  /**
-   * Returns the elements of an array that meet the condition specified in a callback function.
-   * @param predicate 
-   */
-  some(predicate: ArrayPredicate<T>): boolean {
-    return this.arrayList.some(predicate);
-  }
-
-  /**
-   * Returns the elements of an array that meet the condition specified in a callback function.
-   * @param callbackfn 
-   */
-  filter(callbackfn: ArrayPredicate<T>): T[] {
-    return this.arrayList.filter(callbackfn);
-  }
-
-  /**
-   * Calls a defined callback function on each element of an array
-   * @param callbackfn 
-   * @param thisArg 
-   */
-  map<U>(callbackfn: (value: T, index: number, array: T[]) => U):U[] {
-    return this.arrayList.map(callbackfn);
-  }
-
-  /**
-   * Performs the specified action for each element in an array.
-   * @param callbackfn 
-   * @param thisArg 
-   */
-  forEach(callbackfn: (value: T, index: number, array: T[]) => void): void {
-    this.arrayList.forEach(callbackfn);
-  }
-
-  sort(compareFn?: (a: T, b: T) => number): this {
-    this.arrayList.sort(compareFn);
-    return this;
-  }
-
-  all(): T[] {
-    return [...this.arrayList];
   }
 
   toArray(): T[] {
-    return [...this.arrayList];
+    return [...this];
   }
 
   clone(): ArrayList<T> {
-    return new ArrayList<T>(this.arrayList);
+    return new ArrayList<T>(this.toArray());
   }
 
   private objectEqual(lhs: any, rhs: any): boolean {
-    if (lhs === rhs) return true;
-    if (lhs === null || rhs === null) return false;
-    if (lhs === undefined || rhs === undefined) return false;
-    if (lhs.constructor !== rhs.constructor) return false;
-    if ("equals" in lhs) return lhs.equals(rhs);
-    if ("equals" in rhs) return rhs.equals(lhs);
-    else return false;
+    return EqualsBuilder.create().append(lhs, rhs).isEquals();
   }
-
-  // use for...of
-  [Symbol.iterator](): Iterator<T> {
-    return this.arrayList[Symbol.iterator]();
-  }
-
 }

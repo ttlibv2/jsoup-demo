@@ -25,7 +25,7 @@ export abstract class Objects {
     else return String(object).length === 0;
   }
 
-  static isArray(object: any): object is any[] {
+  static isArray<T>(object: any): object is T[] {
     return Array.isArray(object);
   }
 
@@ -91,8 +91,8 @@ export abstract class Objects {
    * @param object - the Object to test, may be null
    * @param defaultValue - the default value to return, may be null
    */
-  static defaultIfNull<T>(object: T, defaultValue: T): T {
-    return Objects.notNull(object) ? object : defaultValue;
+  static defaultIfNull<T>(object: T, defaultValue: ()=> T): T {
+    return Objects.notNull(object) ? object : defaultValue();
   }
 
   static numberToHex(num: number): string {
