@@ -1,4 +1,5 @@
 import { Assert } from "../helper/Assert";
+import { Objects } from "../helper/Objects";
 import { HashMap } from "../helper/HashMap";
 import { Element } from "../nodes/Element";
 import { Elements } from "./Elements";
@@ -59,9 +60,11 @@ export abstract class Selector {
     }
 
     // [string, Iterable<Element>]
-    else if (typeof first === "string" &&Array.isArray(last) &&last[0] instanceof Element) {
+    else if (typeof first === "string" && Objects.isIterable(last)) {
       let query = Assert.notEmpty(first);
       let roots = Assert.notNull(last);
+	  
+	  //console.log(last[0].tag()?.tagName);
 
       let evaluator = QueryParser.parse(query);
       let elements = new Elements();
@@ -69,7 +72,7 @@ export abstract class Selector {
 
       for (let root of roots) {
         let found = Selector.select(evaluator, root);
-        let els = found.filter((el) => seenElements.put(el, true) === null);
+        let els = found.filter((el) => Objects.isNull(seenElements.put(el, true)));
         elements.addAll(els);
         //throw Error("HashMap<Element, Boolean> = new HashMap()");
       }

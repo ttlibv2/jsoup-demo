@@ -97,8 +97,8 @@ export class Char {
     } else return this.num === target;
   }
 
-  in(array: string[]): boolean {
-    return array.some((str) => str === this.string);
+  in(array: string[] | Char[]): boolean {
+    return array.some((str) => this.equals(str));
   }
 
   toString(): string {

@@ -42,6 +42,10 @@ import { NodeUtils } from "../nodes/NodeUtils";
             let node: Node = root, parent: Node = null, depth = 0;
 
             while (Objects.notNull(node)) {
+				if(NodeUtils.isElement(node) && node.tag().tagName === 'div' && node.hasClass('oe_login_buttons')) {
+					console.log('form');
+				}
+				
                 parent = node.parent();
                 visitor.head(node, depth);  // visit current node
 

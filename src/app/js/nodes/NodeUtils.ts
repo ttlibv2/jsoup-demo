@@ -47,7 +47,7 @@ export abstract class NodeUtils {
   }
 
   static isTextNode(node: any): node is TextNode {
-     return NodeUtils.is(node, ['CDataNode']);
+     return NodeUtils.is(node, ['CData', 'Text']);
   }
 
   static isDataNode(node: any): node is DataNode {

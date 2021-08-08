@@ -16,24 +16,24 @@ export class StringReader extends Reader {
     super();
     this.length = str.length;
   }
-
+  
   /** Check to make sure that the stream has not been closed */
   private ensureOpen(): void {
     if (Objects.isNull(this.str)) throw Error(`Stream closed`);
   }
 
   protected read_impl(cbuf?: Char[], offset?: number, len?: number): number {
-    if (arguments.length !== 0) return super.read(cbuf);
-    else {
+	if(arguments.length === 0) {
       this.ensureOpen();
       if (this.next >= this.length) return -1;
       else return this.str.charCodeAt(this.next++);
     }
+	else return this.readBuf(cbuf, offset, len);
   }
 
-  protected readBuf(cbuf: Char[],offset: number = 0,len: number = cbuf.length): number {
+  protected readBuf(cbuf: Char[], offset: number=0, len: number=cbuf.length): number {
     this.ensureOpen();
-
+	
     let invalidIndex = (): boolean => {
       if (offset < 0) return true;
       if (offset > cbuf.length) return true;

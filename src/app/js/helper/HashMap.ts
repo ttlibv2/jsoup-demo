@@ -28,7 +28,7 @@ export class MapEntry<K, V> implements IObject {
    * @return {V}
    */
   getValue(): V {
-    return this.value;
+    return this.value || null;
   }
 
   /**
@@ -41,7 +41,7 @@ export class MapEntry<K, V> implements IObject {
   setValue(value: V): V {
     let oldValue = this.value;
     this.value = value;
-    return oldValue;
+    return oldValue || null;
   }
 
   equals(o: any): boolean {
@@ -128,7 +128,7 @@ export class HashMap<K, V> extends Map<K, V> {
    */
   get(key: K): V {
     key = this.get_key_map_eq(key);
-    return super.get(key);
+    return super.get(key) || null;
   }
 
   /**
@@ -148,7 +148,7 @@ export class HashMap<K, V> extends Map<K, V> {
   put(key: K, value: V): V {
     let oldValue = this.get(key);
     this.set(key, value);
-    return oldValue;
+    return oldValue || null;
   }
 
   /**
@@ -161,7 +161,7 @@ export class HashMap<K, V> extends Map<K, V> {
   putIfAbsent(key: K, value: V): V {
     let oldValue = this.get(key);
     if (Objects.isNull(oldValue)) this.put(key, value);
-    return oldValue;
+    return oldValue || null;
   }
 
   /**
@@ -186,7 +186,7 @@ export class HashMap<K, V> extends Map<K, V> {
   remove(key: K, value: V = undefined): V {
     let oldValue = this.get(key);
     if (value === undefined || oldValue === value) this.delete(key);
-    return oldValue;
+    return oldValue || null;
   }
 
   /**
@@ -234,7 +234,7 @@ export class HashMap<K, V> extends Map<K, V> {
    * @private
    */
   replace(key: K, arg1: V, arg2?: V): any {
-    let oldValue = this.get(key);
+    let oldValue = this.get(key) || null;
 
     // [key: K, newValue: V]
     if (arguments.length === 2) {
@@ -267,11 +267,11 @@ export class HashMap<K, V> extends Map<K, V> {
    * @param mappingFunction - the function to compute a value
    */
   computeIfAbsent(key: K, mappingFunction: (key: K) => V): V {
-    let value = this.get(key);
+    let value = this.get(key) || null;
     if (Objects.notNull(value)) return value;
     else {
       this.put(key, mappingFunction(key));
-      return this.get(key);
+      return this.get(key) || null;
     }
   }
 
@@ -290,7 +290,7 @@ export class HashMap<K, V> extends Map<K, V> {
       let newValue = remappingFunction(key, oldValue);
       if(Objects.isNull(newValue)) this.remove(key);
       else this.put(key, newValue);
-      return newValue;
+      return newValue || null;
     }
   }
 
@@ -308,7 +308,7 @@ export class HashMap<K, V> extends Map<K, V> {
     let newValue = remappingFunction(key, this.get(key));
     if(Objects.isNull(newValue)) this.remove(key);
     else this.put(key, newValue);
-    return newValue;
+    return newValue || null;
   }
 
   /**

@@ -74,18 +74,12 @@ export abstract class TreeBuilder {
 		let tokeniser = this.tokeniser;
 		while (true) {
 			let token = tokeniser.read();
-			console.log(this.inaa(token));
 			this.process(token);
 			token.reset();
 			if (token.isEOF()) break;
 		}
 	}
 	
-	private inaa(token:any) {
-		return token?.tagName;
-		
-	}
-
 	protected abstract process(token: Token): boolean;
 
 	getStack(): Element[] {

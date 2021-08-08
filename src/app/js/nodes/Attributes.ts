@@ -5,6 +5,7 @@ import { ArrayList } from "../helper/ArrayList";
 import { Attribute } from "./Attribute";
 import { EqualsBuilder } from "../helper/EqualsBuilder";
 import { Entities } from "./Entities";
+import {OutputSetting} from '../parse/Setting';
 
 /**
  * The attributes of an Element.
@@ -263,10 +264,9 @@ export class Attributes extends ArrayList<Attribute> {
    * @return HTML
    */
   html(): string {
-    throw Error(`html(): string`);
-    // let sb = new StringBuilder();
-    // let setting = new Document("").outputSetting;
-    // return this.htmlImpl(sb, setting).toString();
+     let sb = new StringBuilder();
+     let setting = OutputSetting.instance;
+     return this.htmlImpl(sb, setting).toString();
   }
 
   htmlImpl(accum: StringBuilder, setting: any): StringBuilder {

@@ -326,7 +326,8 @@ export class AttributeWithValueMatching extends AttributeKeyPair {
    * @param {RegExp | string} pattern
    */
   constructor(attrName: string, pattern: RegExp | string) {
-    super(Normalizer.normalize(attrName), pattern);
+    super(Normalizer.normalize(attrName), RegExp(pattern));
+	
   }
 
   getValue(): RegExp {
@@ -335,7 +336,8 @@ export class AttributeWithValueMatching extends AttributeKeyPair {
 
   matches(root: Element, element: Element): boolean {
     let hasAttr = element.hasAttr(this.key);
-    let isMatch = this.getValue().test(element.attr(this.key));
+	let attrValue = element.attr(this.key)||'';
+    let isMatch = this.getValue().test(attrValue);
     return hasAttr && isMatch;
   }
 
@@ -387,11 +389,9 @@ export abstract class CombiningEvaluator extends Evaluator {
  * Combining `and` evaluator.
  */
 export class And extends CombiningEvaluator {
+	
   matches(root: Element, node: Element): boolean {
-    return !this.list
-      .clone()
-      .reverse()
-      .some((ev) => !ev.matches(root, node));
+    return !this.list.clone().reverse().some((ev) =>!ev.matches(root, node));
   }
 
   toString(): string {

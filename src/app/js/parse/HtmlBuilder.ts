@@ -455,25 +455,17 @@ export class HtmlBuilder extends TreeBuilder {
   static readonly maxQueueDepth: number = 256; // an arbitrary tension point between real HTML and crafted pain
   private isElementInQueue(queue: Element[], element: Element): boolean {
     let bottom = queue.length - 1;
-    let upper =
-      bottom >= HtmlBuilder.maxQueueDepth
-        ? bottom - HtmlBuilder.maxQueueDepth
-        : 0;
+    let upper = bottom >= HtmlBuilder.maxQueueDepth ? bottom - HtmlBuilder.maxQueueDepth : 0;
     return queue
-      .slice(upper, bottom)
-      .reverse()
-      .some((el) => el === element);
+      .slice(upper, bottom + 1)
+      .reverse().some((el) => el === element);
   }
 
   getFromStack(elName: string): Element {
     let bottom = this.stack.length - 1;
-    let upper =
-      bottom >= HtmlBuilder.maxQueueDepth
-        ? bottom - HtmlBuilder.maxQueueDepth
-        : 0;
+    let upper = bottom >= HtmlBuilder.maxQueueDepth ? bottom - HtmlBuilder.maxQueueDepth: 0;
     return this.stack
-      .slice(upper, bottom)
-      .reverse()
+      .slice(upper, bottom + 1).reverse()
       .find((el) => el.getNodeName() === elName);
   }
 
@@ -482,9 +474,7 @@ export class HtmlBuilder extends TreeBuilder {
   }
 
   removeFromStack(el: Element): boolean {
-    let index = this.stack
-      .slice()
-      .reverse()
+    let index = this.stack .slice().reverse()
       .findIndex((el) => el.equals(el));
     if (index !== -1) this.stack.splice(this.stackSize - 1 - index, 1);
     return index !== -1;

@@ -21,6 +21,7 @@ import { NodeUtils } from "./NodeUtils";
 import { TextNode } from "./TextNode";
 import { DataNode } from "./DataNode";
 const {isString, notNull, notEmpty, isNull, equalsIgnoreCase} = Objects;
+import * as uuid from 'uuid';
 
 class WeakReference<T> {
   constructor(private value?: T) {}
@@ -37,6 +38,7 @@ class WeakReference<T> {
  * and manipulate the HTML.
  */
 export class Element extends Node {
+	private readonly uuid: string = uuid.v4();
 
   get nodeType(): NodeType {
     return NodeType.Element;
@@ -240,7 +242,10 @@ export class Element extends Node {
 
   /** @private */
   id(id?: string): any {
-    if (id === undefined) return this.attributes().get("id", true);
+    if (id === undefined) {
+		return this.attributes()
+			.get("id", true)?.getValue();
+	}
     else {
       Assert.notNull(id);
       this.attr("id", id);
@@ -1123,16 +1128,20 @@ export class Element extends Node {
    * @return true if it does, false if not
    */
   hasClass(className: string): boolean {
-    if (this.hasAttributes()) return false;
+    if (!this.hasAttributes()) return false;
     else {
       let classAttr = this.attrs.get("class", true)?.getValue() || "";
-      let len = classAttr.length,
-        wantLen = className.length;
+      let len = classAttr.length, wantLen = className.length;
       if (len === 0 && len < wantLen) return false;
 
       // if both lengths are equal, only need compare the className with the attribute
-      if (len === wantLen) equalsIgnoreCase(className, classAttr);
+      if (len === wantLen) return equalsIgnoreCase(className, classAttr);
+	  
+	  let classes: string[] = classAttr.split(' ');
+	  return classes.some(cls => equalsIgnoreCase(cls, className));
+	  
 
+		/*
       // otherwise, scan for whitespace and compare regions (with no string or arraylist allocations)
       let inClass: boolean = false,
         start = 0;
@@ -1150,6 +1159,7 @@ export class Element extends Node {
           inClass = false;
         }
       }
+	  
 
       // check the last entry
       if (inClass && len - start === wantLen) {
@@ -1158,6 +1168,8 @@ export class Element extends Node {
       }
 
       return false;
+	  
+	  */
     }
   }
 

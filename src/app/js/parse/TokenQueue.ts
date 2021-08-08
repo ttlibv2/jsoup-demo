@@ -47,8 +47,8 @@ export class TokenQueue {
 	 * @return true if the next characters match.
 	 */
 	matches(seq: string): boolean {
-		let str = seq.substring(this.pos, seq.length);
-		return this.queue.toLowerCase() === str.toLowerCase();
+		let str = this.queue.substr(this.pos, seq.length);
+		return seq.toLowerCase() === str.toLowerCase();
 	}
 
 	/**
@@ -141,8 +141,7 @@ export class TokenQueue {
 	}
 
 	consumeToIgnoreCase(seq: string): string {
-		let start = this.pos,
-			first = seq.substring(0, 1);
+		let start = this.pos, first = seq.substring(0, 1);
 		let canScan = first.toLowerCase() === first.toUpperCase();
 
 		while (!this.isEmpty()) {
@@ -160,9 +159,9 @@ export class TokenQueue {
 	}
 
 	/**
-   Consumes to the first sequence provided, or to the end of the queue. Leaves the terminator on the queue.
-   @param seq any number of terminators to consume to. <b>Case insensitive.</b>
-   @return consumed string  
+	   Consumes to the first sequence provided, or to the end of the queue. Leaves the terminator on the queue.
+	   @param seq any number of terminators to consume to. <b>Case insensitive.</b>
+	   @return consumed string  
    */
 	consumeToAny(seq: string[]): string {
 		let start = this.pos;
