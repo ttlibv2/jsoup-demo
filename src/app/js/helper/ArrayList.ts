@@ -61,16 +61,17 @@ export class ArrayList<T> extends Array<T> {
    * @param elements
    * @param index
    */
-  addAll(elements: Iterable<T>, index?: number): void;
+  addAll(elements: Iterable<T>, index?: number): this;
 
   /**
    * Inserts all of the elements
    * @param elements
    * @param index
    */
-  addAll(elements: T[], index?: number): void {
+  addAll(elements: T[], index?: number): this {
     index = index || this.size();
     super.splice(index, 0, ...elements);
+    return this;
   }
 
   /**
@@ -154,6 +155,10 @@ export class ArrayList<T> extends Array<T> {
    * @param {number=1} count
    */
   removeAt(index: number, count?: number): any {
+    return this.removeAtImpl(index, count);
+  }
+
+  protected removeAtImpl(index: number, count?: number): T | T[] {
     let array = this.splice(index, count || 1);
     return Objects.isNull(count) ? array[0] : array;
   }
@@ -256,16 +261,16 @@ export class ArrayList<T> extends Array<T> {
     return super.find(predicate);
   }
 
-  all(): this {
-    return this;
+  all(): T[] {
+    return this.slice();
   }
 
   toArray(): T[] {
-    return [...this];
+    return this.all();
   }
 
   clone(): ArrayList<T> {
-    return new ArrayList<T>(this.toArray());
+    return new ArrayList<T>(this.all());
   }
 
   private objectEqual(lhs: any, rhs: any): boolean {

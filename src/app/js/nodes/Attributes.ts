@@ -94,20 +94,19 @@ export class Attributes extends ArrayList<Attribute> {
   /**
    * @param {Iterable<Attribute>} attrs
    */
-  addAll(attrs: Iterable<Attribute>): void {
+  addAll(attrs: Iterable<Attribute>): this {
     attrs = Assert.notNull(attrs);
     let array: Attribute[] = [...attrs].map((at) => at.setParent(this));
     super.addAll(array);
+    return this;
   }
 
-  /**
-   * Remove attribute at index
-   * @param {number} index
-   * @return {Attribute}
-   */
-  removeAt(index: number): Attribute {
-    return super.removeAt(index, 1)?.setParent(null);
+  protected removeAtImpl(index: number, count?: number): any {
+    let res = super.removeAtImpl(index, count);
+    let array = Array.isArray(res) ? res : [res];
+    array.forEach(attr => attr.setParent(null));
   }
+
 
   /**
    * Remove attribute

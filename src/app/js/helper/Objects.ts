@@ -1,12 +1,9 @@
 export abstract class Objects {
-
+ 
   private constructor() {}
 
   static isPrimitive(object: any): boolean {
-    return (
-      (typeof object !== "object" && typeof object !== "function") ||
-      object === null
-    );
+    return typeof object !== "object" && typeof object !== "function";
   }
 
   static isIterable<T>(object: any): object is Iterable<T> {
@@ -145,5 +142,13 @@ export abstract class Objects {
 
   static inSorted(needle: string, haystack: string[]): boolean {
     return haystack.includes(needle);
+  }
+
+  static entries(object: any): any[][] {
+    return Object.entries(object);
+  }
+
+  static fromEntries(object: Iterable<any>): Record<string, any> {
+    return Object.fromEntries(object);
   }
 }

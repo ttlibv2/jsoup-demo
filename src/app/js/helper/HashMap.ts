@@ -50,6 +50,7 @@ export class MapEntry<K, V> implements IObject {
 }
 
 export class HashMap<K, V> extends Map<K, V> {
+  
   private readonly mapKey = new ArrayList<K>();
 
   /**
@@ -193,8 +194,31 @@ export class HashMap<K, V> extends Map<K, V> {
    * Copies all of the mappings from the specified map to this map
    * @param {Map<K, V>} map
    */
-  putAll(map: Map<K, V>): void {
+  putAll(map: Map<K, V>): this {
     for (let [k, v] of map) this.put(k, v);
+    return this;
+  }
+
+  putEntries(entries: [K, V][]) {
+    entries.forEach(([k, v]) => this.set(k, v));
+    return this;
+  }
+
+  
+  putAllIfAbsent(map: HashMap<K, V>): this {
+    for(let [k,v] of map.entries()){
+      this.putIfAbsent(k, v);
+    }
+    return this;
+  }
+
+
+  putObject(object: any, excludeField: string[]=[]): this {
+    for(let [k, v] of Object.entries(object)) {
+      if(excludeField.includes(k)) continue;
+      else this.set(<any>k, <any>v);
+    }
+    return this;
   }
 
   // /**
@@ -344,17 +368,26 @@ export class HashMap<K, V> extends Map<K, V> {
     return super.entries();
   }
 
+  map<KN, VN>(callbackfn: (key: K, value: V) => [key: KN, value: VN]): HashMap<KN, VN> {
+    let mapNew = new HashMap<KN, VN>();
+    for(let [k,v] of this.entries()) {
+      let cbFn = callbackfn(k, v);
+      mapNew.set(cbFn[0], cbFn[1]);
+    }
+    return mapNew;
+  }
+
 
   forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void) {
     super.forEach(callbackfn);
   }
 
-  // record(): Record<K, V> {
-  //  return <any>Object.fromEntries(this);
-  // }
-
   clone(): HashMap<K, V> {
     return Object.create(this);
+  }
+
+  toJson(): Record<string, V> {
+    return (<any>Object).fromEntries(this);
   }
 
 }

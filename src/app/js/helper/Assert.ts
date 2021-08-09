@@ -17,9 +17,12 @@ export class Assert {
 		else throw new Error(msg || `must be false`);
 	}
 
-	static notNull<T>(object: T, msg?: string): T {
+	static notNull<T>(object: T, msg?: string, clsError?: any): T {
 		if (Objects.notNull(object)) return object;
-		else throw new Error(msg || 'must be not null');
+		else {
+			clsError = clsError || Error;
+			throw new clsError(msg || 'must be not null');
+		}
 	}
 
 	static allNotNull<T>(object: T[], msg?: string): T[] {
