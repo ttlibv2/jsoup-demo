@@ -34,8 +34,12 @@ export class OdUser extends OdCore {
     }));
   }
 
+  joinUrl(...paths: string[]) {
+    return super.joinUrl(...paths);
+  }
+
   signIn(userName: string, passWord: string) {
-    let loginUrl = super.joinUrl('login');
+    let loginUrl = '/en_US/web/login';//this.joinUrl('login');
 
     let headers = {'content-type': 'text/html'};
     let option: any = {responseType: 'text', observe: 'response', headers};
