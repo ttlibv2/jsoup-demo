@@ -1,0 +1,147 @@
+{
+  "fields": {
+    "res.partner": {
+      "find": [
+        "id",
+        "name",
+        "display_name",
+        "email",
+        "phone",
+        "mobile",
+        "parent_id",
+        "vat",
+        "is_company",
+        "company_type"
+      ],
+      "detail": [
+        "id",
+        "name",
+        "display_name",
+        "email",
+        "phone",
+        "mobile",
+        "parent_id",
+        "vat",
+        "is_company",
+        "company_type"
+      ],
+      "search_keyword": [
+        {
+          "key": "vat",
+          "label": "MST",
+          "operator": null
+        },
+        {
+          "key": "email",
+          "label": "Email",
+          "operator": null
+        },
+        {
+          "key": "company_name",
+          "label": "Tên công ty",
+          "operator": null
+        },
+        {
+          "key": "phone",
+          "label": "Số điện thoại",
+          "operator": null
+        }
+      ]
+    },
+    "res.users": {
+      "find": [
+        "id",
+        "name",
+        "display_name",
+        "email",
+        "lang",
+        "tz",
+        "tz_offset",
+        "company_id",
+        "signature"
+      ],
+      "detail": [
+        "id",
+        "name",
+        "display_name",
+        "email",
+        "lang",
+        "tz",
+        "tz_offset",
+        "company_id",
+        "signature"
+      ]
+    },
+    "helpdesk.ticket": {
+      "find": [
+        "id",
+        "name",
+        "partner_id",
+        "priority",
+        "stage_id",
+        "user_id",
+        "create_date"
+      ],
+      "detail": [
+        "stage_id",
+        "active",
+        "kanban_state",
+        "name",
+        "subject",
+        "resolve",
+        "cancel",
+        "partner_id",
+        "contact_name",
+        "email",
+        "company_id",
+        "create_uid",
+        "create_date",
+        "id",
+        "team_id",
+        "user_id",
+        "category_id",
+        "topic_id",
+        "priority",
+        "date_deadline",
+        "date_closed",
+        "description",
+        "is_lock",
+        "locked_by",
+        "unlocked_by",
+        "lock_date",
+        "unlock_date",
+        "reviews",
+        "attachment_ids",
+        "message_follower_ids",
+        "message_ids",
+        "message_attachment_count",
+        "display_name",
+        "write_date"
+      ]
+    },
+    "helpdesk.category": {
+      "find": [
+        "sequence",
+        "name",
+        "category_id",
+        "default_team_id",
+        "manager_id",
+        "user_uid",
+        "create_uid",
+        "create_date"
+      ],
+      "detail": [
+        "sequence",
+        "name",
+        "category_id",
+        "create_uid",
+        "create_date"
+      ]
+    },
+    "wk.team": {
+      "find": ["id", "display_name", "manager", "department_id", "create_uid"]
+    }
+  },
+  "view_ticket": "#id={ticketNumber}&action=526&model=helpdesk.ticket&view_type=form&menu_id=362",
+  "view_partner": "#id={partnerId}&action=155&model=res.partner&view_type=form&menu_id=109"
+}

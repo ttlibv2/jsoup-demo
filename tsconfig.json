@@ -17,8 +17,9 @@
     "importHelpers": true,
     "target": "es2016",
     "module": "es2020",
+    "typeRoots": ["./node_modules/@types", "custom.d.ts"],
     "lib": [
-      "es2020",
+      "ESNext",
       "dom"
     ]
   },

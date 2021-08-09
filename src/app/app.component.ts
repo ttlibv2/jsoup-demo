@@ -1,15 +1,11 @@
-import { Component } from "@angular/core";
+import { Component, Injector } from "@angular/core";
 import { Jsoup } from "./js/Jsoup";
 //import { Document } from "./js/nodes/Document";
 import { HttpClient } from "@angular/common/http";
 import { Node } from "./js/nodes/1004_Node";
+import { Inject } from "@angular/compiler/src/core";
+import { OdUser } from "./odoo/service/OdUser";
 
-class UserTest extends Array {
-
-//toString: string ='[object Array]';
-
-
-}
 
 @Component({
   selector: "cy-root",
@@ -21,10 +17,25 @@ export class AppComponent {
   html: string = undefined;
   msg: string = undefined;
 
-  constructor(private client: HttpClient) {
+  constructor(private client: HttpClient, private inj: Injector) {
     //this.initHtml();
   }
 
+  get odUser(): OdUser {
+    return this.inj.get(OdUser);
+  }
+
+  signIn(str?: string): void {
+    this.odUser.signIn('tuan.nq@ts24corp.com', '123456a@123').subscribe(res => {
+      console.log(res);
+    });
+   
+  }
+
+
+
+
+  
   private initHtml() {
     let url = "/web/login";
     let headers = {
@@ -38,29 +49,4 @@ export class AppComponent {
       .subscribe((doc) => (this.html = doc));
   }
  
-  signIn(str?: string): void {
-    //this.jsoupDemo(this.html, str);
-   let arr: any[] = [];
-
-   console.log(new UserTest().constructor);
-   
-  }
-
-  private jsoupDemo(html: string, str: string) {
-    let doc = Jsoup.parse(html);
-    let el = doc.body().select(str.trim());
-
-    //console.log(el.size());
-    this.printFirst(el);
-  }
-
-  printFirst(el: any) {
-    this.msg = el
-      .all()
-      .map(
-        (n, i) => `<p>${i + 1}: ${n.tag().tagName}${n.attributes().toString()}
-		<br>${n.text()}</p>`
-      )
-      .join("<br/><br/>");
-  }
 }
