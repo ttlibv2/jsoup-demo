@@ -45,6 +45,10 @@ export class ObjectMap extends HashMap<string, any> {
   clone(): ObjectMap {
     return Object.create(this);
   }
+  
+  toUrl(): string {
+	return [...this.entries()].map(([k,v]) => `${k}=${v}`).join('&');
+  }
 
 
 }

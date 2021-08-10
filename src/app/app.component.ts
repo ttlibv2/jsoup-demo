@@ -5,7 +5,8 @@ import { HttpClient } from "@angular/common/http";
 import { Node } from "./js/nodes/1004_Node";
 import { Inject } from "@angular/compiler/src/core";
 import { OdUser } from "./odoo/service/OdUser";
-
+import {LocalStorage} from './service/LocalStorage';
+import * as CryptoJS from 'crypto-js'; 
 
 @Component({
   selector: "cy-root",
@@ -24,12 +25,15 @@ export class AppComponent {
   get odUser(): OdUser {
     return this.inj.get(OdUser);
   }
+  
+  get local() {
+	  return this.inj.get(LocalStorage);
+  }
 
   signIn(str?: string): void {
-    this.odUser.signIn('tuan.nq@ts24corp.com', '123456a@123').subscribe(res => {
-      console.log(res);
+    this.odUser.signIn('tuan.nq@ts24corp.com', '123456a@').subscribe(res => {
+		this.local.set('clsUser', res);
     });
-   
   }
 
 

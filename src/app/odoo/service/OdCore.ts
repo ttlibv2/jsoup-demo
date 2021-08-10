@@ -4,23 +4,30 @@ import { Objects } from "../../js/helper/Objects";
 import { ObjectMap } from "../../js/helper/ObjectMap";
 import { ClsModel, ClsNameSearchOption, ClsPage, ClsSearchReadOption, ClsUser } from "../Model";
 import { OdHelper } from "../Helper";
+import { Assert } from "../../js/helper/Assert";
 import {switchMap} from 'rxjs/operators';
 import { Observable, of } from "rxjs";
 
-//@Injectable({providedIn: 'root'})
+@Injectable({providedIn: 'root'})
 export abstract class OdCore {
   static UrlRoot: string = 'https://web.ts24.com.vn/web';
-  private clsUser: ClsUser;
+  private clsUser_: ClsUser;
 
   abstract get basePath(): string;
   abstract get model(): string;
 
   constructor(protected readonly client: HttpClient){}
 
-  setClsUser(clsUser: ClsUser): this {
-    this.clsUser = clsUser;
-    return this;
+  set clsUser(clsUser: any) {
+    this.clsUser_ = Objects.isNull(clsUser) ? null : clsUser instanceof ClsUser ? clsUser : new ClsUser().assign(clsUser);
   }
+  
+  get clsUser():ClsUser {
+	  Assert.notNull(this.clsUser_, `@clsUser is null -> please set user`);
+	  return this.clsUser_;
+  }
+  
+
 
   protected getFields(key: string, modelName?: string) {
     modelName = modelName || this.model;

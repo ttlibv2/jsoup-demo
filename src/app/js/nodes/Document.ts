@@ -1,6 +1,7 @@
 import { Assert } from "../helper/Assert";
 import { ParseSetting, OutputSetting } from "../parse/Setting";
 import { Tag } from "../parse/Tag";
+import * as EvaluatorNS  from "../select/Evaluator";
 import { DocumentType } from "./DocumentType";
 import { Element } from "./Element";
 import { StringUtil } from "../helper/StringUtil";
@@ -26,7 +27,7 @@ export class Document extends Element {
     return NodeType.Document;
   }
 
-  static readonly titleEval: any = undefined;// = new EvaluatorNS.Tag("title");
+  static readonly titleEval: any = new EvaluatorNS.Tag("title");
 
   outputSetting: OutputSetting;
   quirksMode: QuirksMode = QuirksMode.noQuirks;

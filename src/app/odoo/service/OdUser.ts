@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { concat, empty, Observable, of, throwError } from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { switchMap, delay, concatMap, catchError } from "rxjs/operators";
 import { ObjectMap } from "src/app/js/helper/ObjectMap";
 import { Jsoup } from "src/app/js/Jsoup";
 import { ClsUser } from "../Model";
@@ -37,73 +37,93 @@ export class OdUser extends OdCore {
   joinUrl(...paths: string[]) {
     return super.joinUrl(...paths);
   }
-
-  signIn(userName: string, passWord: string) {
-    let loginUrl = '/en_US/web/login';//this.joinUrl('login');
-
-    let headers = {'content-type': 'text/html'};
-    let option: any = {responseType: 'text', observe: 'response', headers};
-    let pageCookie: string = undefined;
-    let loginPayload = ObjectMap.create().set('username', userName).set('password', passWord);
-
-    //-- B1: load csrf_token + session_id
-    let loginPage = this.client.get(loginUrl, option).pipe(switchMap((resp: any) => {
-      document.cookie = pageCookie = resp.headers.get('set-cookie');
-      let input: any[] = Jsoup.parse(resp.body)
-        .selectFirst('form[action=/web/login]')
-        .select('input[type=hidden]')
-        .map(el => [el.attr('name'), el.val()]);
-
-        loginPayload.putEntries(input);
-        return of({input, cookie: document.cookie});
-    }));
-
-    //-- B2: login
-    let payload = loginPayload.toJson();
-    let sendLogin = this.client.post(loginUrl, payload, option).pipe(switchMap((resp: any) => {
-      document.cookie = pageCookie = resp.headers.get('set-cookie');
-
-      let jsDoc = Jsoup.parse(resp.body);
-
-      // login error
-      if (jsDoc.title().includes('Login')) {
-        let ps = jsDoc.selectFirst('form[action=/web/login]').select('p.alert.alert-danger');
-        if (!ps.isEmpty()) {
-          let msg = ps.get(0).text().trim();
-          if (msg.includes(`Wrong login/password`)) {
-            msg = `<b>Tài khoản đăng nhập không đúng.</b>" +
-              "<br> Vui lòng kiểm tra lại !!`;
-          }
-
-          return throwError({ code: 'login_ts24', status: 401, msg: msg });
-        }
-
-
-
-
-
-      }
-
-      // login success
-      return new Observable<any>();
-    }));
-
-    //-- B3: lấy thông tin user
-    // let getUser = this.client.get(this.joinUrl()+'?', option).pipe(switchMap((resp: any) => {
-    //   let jsDoc = Jsoup.parse(resp.body);
-
-    // }));
-
-    return concat(loginPage, sendLogin);
-
-
-
-
-
-
-
+  
+  toQuery(map) {
+	  console.log(`abc`);
+	  return map.toUrl();
   }
 
-  
+  signIn(username: string, password: string) {
+    let loginUrl = '/web_login/login';//this.joinUrl('login');
+	
+    let payload = `login=${username}&password=${password}`;
 
+	//-- B1: load csrf_token + session_id
+    return this.loadHtml(loginUrl)
+	
+		//-- B2: login
+		.pipe(switchMap(pl => this.sendLogin(loginUrl, payload + '&'+ pl)
+		
+		//-- B3: lấy thông tin user
+		.pipe(switchMap(p => this.getUserInfo()))));
+  }
+	
+	
+	//-- B1: load csrf_token + session_id
+	private loadHtml(loginUrl: string) {
+		console.log(`B1: load csrf_token + session_id`);
+		return this.client.get(loginUrl, {responseType: 'text'}).pipe(switchMap(html => {
+			let doc = Jsoup.parse(html);
+			let form = doc.selectFirst('form[action=/web/login]');
+			let input = form.select('input[type=hidden]').map(e => `${e.attr('name')}=${e.val()}`);
+			return of(input.join('&'));
+		}));
+		
+	}
+	
+	//-- B2: login
+	private sendLogin(loginUrl: string, payload: string) {
+		console.log(`B2: login`);
+		let headers = {'content-type': 'application/x-www-form-urlencoded'};
+		return this.client.post(loginUrl, payload, {responseType: 'text', headers})
+		.pipe(
+			//catchError(err => of({err: err})),
+			switchMap(html => {
+				
+				let jsDoc = Jsoup.parse(html);
+
+		  // login error
+		  if (jsDoc.title().includes('Login')) {
+			let ps = jsDoc.selectFirst('form[action=/web/login]').select('p.alert.alert-danger');
+			if (!ps.isEmpty()) {
+			  let msg = ps.get(0).text().trim();
+			  if (msg.includes(`Wrong login/password`)) {
+				msg = `<b>Tài khoản đăng nhập không đúng.</b>" +
+				  "<br> Vui lòng kiểm tra lại !!`;
+			  }
+
+			  return throwError({ code: 'login_ts24', status: 401, msg: msg });
+			}
+
+		  }
+
+		  // login success
+		  return of(payload);
+    }));
+		
+	}
+  
+	//-- B3: lấy thông tin user
+	private getUserInfo() {
+		console.log(`B3: lấy thông tin user`);
+		let url = '/web_api';
+		return this.client.get(url, {responseType: 'text'}).pipe(switchMap(html => {
+			let script = Jsoup.parse(html)
+				.select('script[type=text/javascript]')
+				.map(el => el.data())
+				.filter(tx => tx.includes('csrf_token') || tx.includes('session_id'))
+				.map(tx => tx.replace('var odoo =', '')
+					.replace('csrf_token', `"csrf_token"`)
+					.replace(/,\s+}/, '}')    
+					.replace('odoo.session_info =','')
+					.replace('};', '}')
+					.replace(/\n+/gm, '').trim())
+					.map(tx => JSON.parse(tx))
+					.reduce((o,v) => ({...o,...v}), {});
+					
+			this.clsUser = new ClsUser().assign(script);
+			return of(this.clsUser);
+		}));
+		
+	}
 }

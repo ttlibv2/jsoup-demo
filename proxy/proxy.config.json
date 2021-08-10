@@ -5,7 +5,8 @@
     "logLevel": "debug",
     "changeOrigin": true,
     "pathRewrite": {
-      "/web123":"/en_US/web"
+      "^/web_login":"/en_US/web",
+	  "^/web_api":"/web"
     }
   }
 }

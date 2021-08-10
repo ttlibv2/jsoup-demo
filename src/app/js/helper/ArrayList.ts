@@ -89,6 +89,7 @@ export class ArrayList<T> extends Array<T> {
    * Copy to array from `[start, end - 1]`
    * @param {number=} start
    * @param {number=} end
+   * @return {ArrayList}
    */
   slice(start?: number, end?: number): T[] {
     return super.slice(start, end);
@@ -240,9 +241,13 @@ export class ArrayList<T> extends Array<T> {
    */
   join(separator?: string, callbackfn?: (element: T) => any): string {
     callbackfn = callbackfn || ((el) => el);
-    return this.map((s: T) => callbackfn(s)).join(separator);
+    return this.all().map((s: T) => callbackfn(s)).join(separator);
   }
-
+  
+  map<U>(callbackfn: (value: T, index: number, array: T[]) => U): U[] {
+	return this.all().map(callbackfn);
+  }
+  
   /**
    * Returns the index of the first element
    * @param predicate
@@ -262,7 +267,7 @@ export class ArrayList<T> extends Array<T> {
   }
 
   all(): T[] {
-    return this.slice();
+    return [...this.slice()];
   }
 
   toArray(): T[] {

@@ -4,11 +4,25 @@ import { HashMap } from "../js/helper/HashMap";
 import { ObjectMap } from "../js/helper/ObjectMap";
 import { Objects } from "../js/helper/Objects";
 
+function set_value(target: any, key: string, value: any) {
+	let fnc = target[`set_${key}`];
+	if(typeof fnc === 'function') fnc(value);
+	else {
+		fnc = target[`set${key.charAt(0).toUpperCase()}${key.substring(1)}`];
+		if(typeof fnc === 'function') fnc(value);
+		else if(Object.prototype.hasOwnProperty.call(target, key)) target[key] = value;
+		else if(typeof target[`set`] === 'function') target[`set`](key, value);
+		else target[key] = value;
+	}
+	
+}
+
 function assign(target: any, source: any): any {
   for (let prop in source) {
-    if (prop in this) this[prop] = source[prop];
-    else target.set(prop, source[prop]);
+	 set_value(target, prop, source[prop]);
   }
+  
+  return target;
 }
 
 export abstract class ClsModel {
@@ -17,10 +31,10 @@ export abstract class ClsModel {
     .set("name", 1)
     .set("display_name", 1);
 
-  customObj = new ObjectMap();
+  //customObj = new ObjectMap();
 
   set(key: string, value: any): this {
-    this.customObj.set(key, value);
+    this[key] = value;
     return this;
   }
 
@@ -30,7 +44,7 @@ export abstract class ClsModel {
   }
 
   cloneMap(): ObjectMap {
-    return this.customObj.clone().putObject(this, ["customObj"]);
+	  return ObjectMap.create().putObject(this);
   }
 
   static arrToObject(arr: any[] | any, fields?: HashMap<string, number>) {
@@ -247,7 +261,7 @@ export class ClsUserContext extends ClsModel {
     this.uid = this.uid || context.uid;
     this.tz = this.tz || context.tz;
     this.lang = this.lang || context.lang;
-    this.customObj.putAllIfAbsent(context.customObj);
+    //this.customObj.putAllIfAbsent(context.customObj);
     return this;
   }
 
@@ -269,14 +283,15 @@ export class ClsUser extends ClsModel {
   partner_id: number;
   selected: boolean;
 
-  context: ClsUserContext;
+  context: ClsUserContext; 
   csrf_token: string;
   cookie: string;
 
   assign(obj: any): this{
     super.assign(obj);
-    this.display_name = this.display_name || this.name;
-    this.context = new ClsUserContext().assign(this.context);
+	this.context = new ClsUserContext().assign(obj.user_context || obj.context);
+	this.id = obj.uid;
+	delete this['user_context'];
     return this;
   }
 
